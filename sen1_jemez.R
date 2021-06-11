@@ -35,5 +35,5 @@ cropped <-lapply(rast_list, crop_list)
 vv_stack <-stack(cropped)
 vv_db_stack <-10*log10(vv_stack)
 plot(vv_db_stack)
-vv_db_stack[[4]]
-writeRaster(vv_db_stack[[4]], "/Volumes/JT/projects/uavsar/jemez/sen1/sen1_2020_03_12_VV.tiff", overwrite = TRUE)
+vv_db_stack[[12]]
+writeRaster(vv_db_stack[[12]], "/Volumes/JT/projects/uavsar/jemez/sen1/sen1_2020_04_05_VV.tiff", overwrite = TRUE)

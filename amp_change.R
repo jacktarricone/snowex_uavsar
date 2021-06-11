@@ -100,25 +100,4 @@ writeRaster(amp_db_diff2, "/Volumes/JT/projects/uavsar/jemez/amp_db_diff_0219_02
 
 
 
-##### sentinal data
-# bring in rasters
-vv <-raster("/Users/jacktarricone/Downloads/S1B_IW_20191231T010049_DVP_RTC30_G_saunem_3303/S1B_IW_20191231T010049_DVP_RTC30_G_saunem_3303_VV.tif")
-vv2 <-raster("/Users/jacktarricone/Downloads/S1B_IW_20191008T010051_DVP_RTC30_G_saunem_AC9F/S1B_IW_20191008T010051_DVP_RTC30_G_saunem_AC9F_VV.tif")
 
-# set crop extent
-crop <-extent(357000, 382000, 3950000, 4000000)
-
-# create list of raster for lapply
-rast_list<-list(vv,vv2)
-
-# function to crop
-crop_list <-function(x){
-  crop(x, extent(crop))
-}
-
-# lapp
-cropped <-lapply(rast_list, crop_list)
-vv_stack <-stack(cropped)
-plot(vv_stack)
-
-writeRaster(vv_stack, "/Volumes/JT/projects/uavsar/jemez/vv_stack.tiff")
