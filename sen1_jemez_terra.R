@@ -24,6 +24,7 @@ rast_list # list of rasters
 
 # set crop extent
 crop <-ext(357000, 382000, 3950000, 4000000)
+vg_crop <-ext(360000, 373000, 3965000, 3974000)
 
 # function to crop
 crop_list <-function(x){
@@ -33,6 +34,7 @@ crop_list <-function(x){
 # lapp
 cropped <-lapply(rast_list, crop_list)
 vv_stack <-rast(cropped)
+writeRaster(vv_stack, "/Volumes/JT/projects/uavsar/jemez/sen1/jemez_sen1_VV_stack_nodB.tif")
 vg <-crop(vv_db_stack, ext(vg_crop))
 vv_db_stack <-10*log10(vv_stack)
 feb29_mar05_change <-vv_db_stack[[21]] - vv_db_stack[[20]]
@@ -55,13 +57,6 @@ dev.off()
 vv_db_stack[[10]]
 writeRaster(vv_db_stack[[21]], "/Volumes/JT/projects/uavsar/jemez/sen1/sen1_2020_03_05_VV.tif", overwrite = TRUE)
 
-jemez_stack <-raster("/Volumes/JT/projects/uavsar/jemez/sen1/jemez_sen1_VV_stack.tif")
-
-avg <-(vv_stack[[1]] + vv_stack[[10]] + vv_stack[[11]] + vv_stack[[12]] + vv_stack[[13]])/5
-plot(avg)
-dB_avg <-10*log10(avg)
-plot(dB_avg)
-writeRaster(dB_avg, "/Volumes/JT/projects/uavsar/jemez/sen1/dB_avg.tif")
 
 # oct 8, 2020
 oct08 <-vv_db_stack[[1]]
