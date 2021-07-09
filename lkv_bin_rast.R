@@ -19,9 +19,9 @@ lkv_mat <-as.data.frame(lkv)
 head(lkv_mat)
 
 # seqence every third number, convert to data matrix with correct number of rows
-east <-rast(matrix(lkv_mat[seq(1, nrow(lkv_mat),3),], nrow = 8636, byrow = TRUE))
-north <-rast(matrix(lkv_mat[seq(2, nrow(lkv_mat),3),], nrow = 8636, byrow = TRUE))
-up <-rast(matrix(lkv_mat[seq(3, nrow(lkv_mat),3),], nrow = 8636, byrow = TRUE))
+east_mat <-matrix(lkv_mat[seq(1, nrow(lkv_mat),3),], nrow = 8636, byrow = TRUE)
+north_mat <-matrix(lkv_mat[seq(2, nrow(lkv_mat),3),], nrow = 8636, byrow = TRUE)
+up_mat <-matrix(lkv_mat[seq(3, nrow(lkv_mat),3),], nrow = 8636, byrow = TRUE)
 
 # read in the lat/lon/ele data
 llh <-readBin(llh_path, what = "numeric", n = 2^30, size = 4, endian = "little")
@@ -29,31 +29,51 @@ llh_mat <-as.data.frame(llh)
 head(llh_mat)
 
 # seqence every third number, convert to data matrix with correct number of rows, convert to raster
-lat <-rast(matrix(llh_mat[seq(1, nrow(llh_mat),3),], nrow = 8636, byrow = TRUE))
-lon <-rast(matrix(llh_mat[seq(2, nrow(llh_mat),3),], nrow = 8636, byrow = TRUE))
-ele <-rast(matrix(llh_mat[seq(3, nrow(llh_mat),3),], nrow = 8636, byrow = TRUE))
-
-#creat a stack
-look_stack_raw <-c(east,north,up,lat,lon,ele)
-look_stack_raw
-
-look_stack <-look_stack_raw[nrow(look_stack_raw):1,ncol(look_stack_raw):1]
-plot(look_stack)
+lat_mat <-matrix(llh_mat[seq(1, nrow(llh_mat),3),], nrow = 8636, byrow = TRUE)
+lon_mat <-matrix(llh_mat[seq(2, nrow(llh_mat),3),], nrow = 8636, byrow = TRUE)
+ele_mat <-matrix(llh_mat[seq(3, nrow(llh_mat),3),], nrow = 8636, byrow = TRUE)
 
 
-
-lvk_crs <-crs("+proj=longlat +datum=WGS84 +ellps=WGS84")
-crs(yert) <-"+proj=longlat +datum=WGS84 +ellps=WGS84"
-yert <-rast(xmax = 35.732368469, ymin = -106.31452941)
-yert
-
-writeBin(test, "/Volumes/JT/projects/uavsar/jemez/look_vector/alamos_35915_01_BU_s1_2x8.lkv1.grd", 
-         size = 4, endian = "little")
-fwrite(test2, "/Volumes/JT/projects/uavsar/jemez/look_vector/alamos_35915_01_BU_s1_2x8.lkv2.grd",
-       row.names = FALSE, col.names = FALSE)
-fwrite(test3, "/Volumes/JT/projects/uavsar/jemez/look_vector/alamos_35915_01_BU_s1_2x8.lkv3.grd",
-       row.names = FALSE, col.names = FALSE)
+#ele_bin <-llh_mat[seq(3, nrow(llh_mat),3),]
+#writeBin(ele_bin, "/Volumes/JT/projects/uavsar/jemez/look_vector/BU/ele_bin.grd",
+#         size = "NA_integer_", endian = "little")
+#?writeBin
 
 
-yert<-rast(test3, nrows = 8628, ncols = 4895, xmax = 35.732368469, ymin = -106.314529419)
+# create list of matrix so we can flip them before converting to rasters
+mat_list <-list(east_mat,north_mat,up_mat,lat_mat,lon_mat,ele_mat)
+rast_list2 <-lapply(mat_list, rast)
+look_stack2 <-rast(rast_list2)
+ext(look_stack2) <-ext(-106.31461, -106.56371, 36.10769, 35.71848)
+crs(look_stack2) <-"+proj=longlat +datum=WGS84 +ellps=WGS84"
+plot(look_stack2[[3]])
 
+# flipping function
+flip_rasters <-function(x){
+  x[nrow(x):1,ncol(x):1]
+}
+
+flipped_list <-lapply(mat_list, flip_rasters) # flip whole list
+rast_list <-lapply(flipped_list, rast) # convert matrix list to raster list
+rast_list # check, yup
+
+look_stack <-rast(rast_list) # convert raster list to a stack
+look_stack #insect
+plot(look_stack[[3]]) # test plot
+
+
+# save non-geocoded tiff
+#writeRaster(look_stack, "/Volumes/JT/projects/uavsar/jemez/look_vector/BU/look_stack_nocrs.tiff")
+
+
+# set extent by min and max of lat lon data
+ext(look_stack) <-ext(-106.31461, -106.56371, 36.10769, 35.71848)
+look_stack
+
+# set crs
+crs(look_stack) <-"+proj=longlat +datum=WGS84 +ellps=WGS84"
+plot(look_stack2[[6]])
+
+writeRaster(look_stack2[[3]], "/Volumes/JT/projects/uavsar/jemez/look_vector/BU/up_test_flip.tiff")
+fwrite(ele_mat, "/Volumes/JT/projects/uavsar/jemez/look_vector/BU/ele_bin.txt", row.names = FALSE, col.names = FALSE)
+ele_bin <-look_stack[[6]]
