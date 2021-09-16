@@ -138,7 +138,7 @@ lkv_envi <-read.ENVI(lkv, headerfile=paste(lkv, ".hdr", sep=""))
 readLines(lkv_hdr)
 dim(lkv_envi)
 
-# create eat mat
+# create east mat
 east <-matrix(lkv_envi[,,1], nrow = 8636)
 dim(east)
 east_r <-rast(east)
@@ -158,6 +158,32 @@ write.ENVI2(north, "/Users/jacktarricone/warp_test/good_llh_vrt/north", interlea
 write.ENVI2(up, "/Users/jacktarricone/warp_test/good_llh_vrt/up", interleave = c("bsq"))
 
 
+###########################################################
+##### read back in new geotiffs from python code ##########
+###########################################################
 
 
 
+up_gc <-rast("/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_up_lkv_raw.tif")
+values(up_gc)[values(up_gc) == 0] = NA
+up_gc
+plot(up_gc)
+writeRaster(up_gc, "/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_up_lkv.tif")
+
+north_gc <-rast("/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_north_lkv_raw.tif")
+values(north_gc)[values(north_gc) == 0] = NA
+plot(north_gc)
+writeRaster(north_gc, "/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_north_lkv.tif")
+
+east_gc <-rast("/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_east_lkv_raw.tif")
+values(east_gc)[values(east_gc) == 0] = NA
+plot(east_gc)
+writeRaster(east_gc, "/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_east_lkv.tif")
+
+lvk_list <-list.files(patter ="/*_lkv.tif", full.names = T)
+print(lvk_list)
+lvk_stack <-rast(lvk_list)
+writeRaster(lvk_stack, "/Users/jacktarricone/warp_test/good_llh_vrt/lvk_stack.tif")
+
+plot(lvk_stack)
+hist(north_gc)
