@@ -22,6 +22,7 @@ library(terra)
 
 llh <-"/Volumes/JT/projects/uavsar/jemez/look_vector/BU/alamos_35915_03_BU_s1_2x8.llh"
 llh_hdr <-"/Volumes/JT/projects/uavsar/jemez/look_vector/BU/alamos_35915_03_BU_s1_2x8.llh.hdr"
+read
 llh_envi <-read.ENVI(llh, llh_hdr) 
 readLines(llh_hdr)
 dim(llh_envi)
@@ -164,26 +165,26 @@ write.ENVI2(up, "/Users/jacktarricone/warp_test/good_llh_vrt/up", interleave = c
 
 
 
-up_gc <-rast("/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_up_lkv_raw.tif")
+up_gc <-rast("/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_up_raw.tif")
 values(up_gc)[values(up_gc) == 0] = NA
 up_gc
 plot(up_gc)
-writeRaster(up_gc, "/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_up_lkv.tif")
+writeRaster(up_gc, "/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_up.tif")
 
-north_gc <-rast("/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_north_lkv_raw.tif")
+north_gc <-rast("/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_north_raw.tif")
 values(north_gc)[values(north_gc) == 0] = NA
 plot(north_gc)
-writeRaster(north_gc, "/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_north_lkv.tif")
+writeRaster(north_gc, "/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_north.tif")
 
-east_gc <-rast("/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_east_lkv_raw.tif")
+east_gc <-rast("/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_east_raw.tif")
 values(east_gc)[values(east_gc) == 0] = NA
 plot(east_gc)
-writeRaster(east_gc, "/Users/jacktarricone/warp_test/good_llh_vrt/geocoded_east_lkv.tif")
+writeRaster(east_gc, "/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_east.tif")
 
 lvk_list <-list.files(patter ="/*_lkv.tif", full.names = T)
 print(lvk_list)
 lvk_stack <-rast(lvk_list)
-writeRaster(lvk_stack, "/Users/jacktarricone/warp_test/good_llh_vrt/lvk_stack.tif")
+#writeRaster(lvk_stack, "/Users/jacktarricone/warp_test/good_llh_vrt/lvk_stack.tif")
 
 plot(lvk_stack)
 hist(north_gc)
