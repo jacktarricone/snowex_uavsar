@@ -97,7 +97,17 @@ plot(unw_correct)
 # a method to systematically estimate these numbers
 # talk to HP about this
 
-density <- .29 # get a real number and do senativity analysis
+###################################################################
+###################################################################
+###################################################################
+# don't pick denisty and di_elec value
+# pick a density and LWC (from ryans equations and field measurments)
+# vary density and LWC over range over measured values
+###################################################################
+###################################################################
+###################################################################
+
+density <- .29 # get a real number and do sensitivity analysis
 di_elec <- 1.4 # 
 wL <- 23.8403545
 
