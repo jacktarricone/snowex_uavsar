@@ -46,9 +46,9 @@ plot(lvk_stack)
 
 
 # function triangulate distance to plane from up and east rasters
-plv_km_convert <-function(east_rast, up_rast){
+plv_km_convert <-function(east_rast, up_rast, north_rast){
   
-plv_m <-((east_rast^2)+(up_rast^2))^.5
+plv_m <-((east_rast^2)+(up_rast^2)+(north_rast^2))^.5
 plot(plv_m)
 plv_km <-plv_m/1000
 return(plv_km)
@@ -56,8 +56,8 @@ return(plv_km)
 }
 
 # convert
-plv_km <-plv_km_convert(east,up)
+plv_km <-plv_km_convert(east,up,north)
 plot(plv_km)
 plv_km
-# writeRaster(plv_km, "/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/plv_km.tif")
+writeRaster(plv_km, "/Volumes/JT/projects/uavsar/jemez/look_vector/plv_km_good.tif")
 
