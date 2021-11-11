@@ -127,8 +127,11 @@ z_rs <-resample(z_comp, plv, method = "bilinear")
 # writeRaster(z_rs, "/Volumes/JT/projects/uavsar/jemez/new_inc/surface_z_5.6.tif")
 
 
+### from HPs notes
+#cos^-1((n1*n2+e1*e2+up1*up2)/(distance calc through atm for each vector))
 
-# cos^-1((y_rs*radar_north+x_rs*radar_east+z_rs*radar_up)/(distance calc through atm for each vector))
+# in my code
+# (cos^-1)((y_rs*radar_north + x_rs*radar_east + z_rs*radar_up)/(plv_m))
 
 # calculate surface normal
 surf_norm <-(y_rs*radar_north + x_rs*radar_east + z_rs*radar_up)
@@ -136,12 +139,12 @@ plot(surf_norm)
 
 # compute the dot product to get a inc. angle in radians
 # make sure to put the negative sign!
-inc_ang_rad <-(acos)(-surf_norm/(plv*1000))
+inc_ang_rad <-(acos)(-surf_norm/plv_m)
 plot(inc_ang_rad)
 inc_ang_deg <-inc_ang_rad*(180/pi)
 plot(inc_ang_deg)
-writeRaster(inc_ang_deg, "/Volumes/JT/projects/uavsar/jemez/new_inc/lidar_inc_deg.tif")
-writeRaster(inc_ang_rad, "/Volumes/JT/projects/uavsar/jemez/new_inc/lidar_inc_rad.tif")
+# writeRaster(inc_ang_deg, "/Volumes/JT/projects/uavsar/jemez/new_inc/lidar_inc_deg.tif")
+# writeRaster(inc_ang_rad, "/Volumes/JT/projects/uavsar/jemez/new_inc/lidar_inc_rad.tif")
 
 
 
