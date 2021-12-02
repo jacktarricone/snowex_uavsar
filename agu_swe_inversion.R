@@ -25,7 +25,7 @@ plot(lidar_inc)
 
 # mask and crop unw
 unw_crop <-mask(unw, lidar_inc_raw)
-unw_crop <-crop(unw_crop, crop_ext)
+unw_crop <-crop(unw_crop, lidar_inc)
 plot(unw_crop)
 
 #bring in UAVSAR rasters
@@ -38,23 +38,21 @@ insar_files
 cor <-rast(insar_files[[3]])
 values(cor)[values(cor) == 0] = NA
 cor_crop <-mask(cor, lidar_inc_raw)
-cor_crop <-crop(cor, crop_ext)
+cor_crop <-crop(cor, lidar_inc)
 plot(cor_crop)
 
 # lidar dem
-lidar_dem <-rast("/Volumes/JT/projects/uavsar/jemez/lidar/lidar_uavsar_dem_resamp.tif")
-ext(lidar_dem) <-ext(lidar_inc) # set extents 
-lidar_dem_crop <-mask(lidar_dem, lidar_inc) # mask
+dem <-rast("/Volumes/JT/projects/uavsar/jemez/lidar/lidar_uavsar_dem_resamp.tif")
+dem_crop <-crop(dem, lidar_inc)
+plot(dem_crop)
 
 # test plot all the needed data - unw, dem, cor, inc
 plot(unw_crop)
-plot(lidar_dem_crop, add = TRUE)
+plot(dem_crop, add = TRUE)
 plot(cor_crop, add = TRUE)
 plot(lidar_inc, add = TRUE)
 
 
-
-ext(crop_ext) <-ext(-106.57, -106.38, 35.8, 35.96)
 ####################################
 ###### bring in fsca layers ########
 ####################################
@@ -65,7 +63,8 @@ ext(fsca) <-ext(unw)
 plot(fsca)
 
 # crop to inc 
-fsca_crop <-mask(fsca, lidar_inc)
+fsca_crop <-mask(fsca, lidar_inc_raw)
+fsca_crop <-crop(fsca_crop, lidar_inc)
 plot(fsca_crop)
 fsca_crop
 
@@ -96,7 +95,7 @@ plot(unw_crop)
 ######### converting phase change to SWE ##############
 ########################################################
 
-# this is just a quick test again, will need to devolp
+# this is just a quick test again, will need to develope
 # a method to systematically estimate these numbers
 # talk to HP about this
 
@@ -110,8 +109,8 @@ plot(unw_crop)
 ###################################################################
 ###################################################################
 
-density <- .29 # get a real number and do sensitivity analysis
-di_elec <- 1.4 # 
+density <- .28 # get a real number and do sensitivity analysis
+di_elec <- 1.3 # 
 wL <- 23.8403545
 
 # first step, define funciton for insar constant
@@ -120,16 +119,25 @@ insar_constant <-function(inc, wL, density, di_elec){
   }
 
 # create the raster
-insar_constant_rast <-insar_constant(lidar_inc, wL = 23.8403545, density = .29, di_elec = 1.4)
+insar_constant_rast <-insar_constant(lidar_inc, wL = 23.8403545, density = .28, di_elec = 1.3)
 hist(insar_constant_rast)
 plot(insar_constant_rast)
 
 #do swe change calc with masked unwrapped phase data
-delta_swe_raw <-insar_constant_rast*unw_correct
+delta_swe_raw <-insar_constant_rast*unw_crop
 plot(delta_swe_raw)
 hist(delta_swe_raw, breaks = 100)
-# writeRaster(delta_swe_raw,"/Volumes/JT/projects/uavsar/jemez/delta_swe_lidar_test.tif")
+writeRaster(delta_swe_raw,"/Volumes/JT/2021_1_fall_UNR/agu/data/delta_swe_raw_new.tif")
 
+# calculating absolute SWE change
+# bulk density change of -.7 cm from the 12th to 19th
+# relative UAVSAR value was 0.0187817 cm, therefore we're setting to a known change value
+# this meathod is up for debate....
+
+delta_swe_abs <-delta_swe_raw - (0.0187817 + .7)
+writeRaster(delta_swe_abs,"/Volumes/JT/2021_1_fall_UNR/agu/data/delta_swe_abs_new.tif")
+plot(delta_swe_abs)
+hist(delta_swe_abs, breaks = 100)
 
 # maske for canopy cover so we get just unforested areas
 cc <-rast("/Volumes/JT/projects/uavsar/jemez/nlcd/cc_final.tif")
@@ -138,6 +146,17 @@ values(cc)[values(cc) >25] = NA
 cc_25_swe_mask <- mask(delta_swe_rast, cc, maskvalue = NA)
 plot(cc_25_swe_mask)
 #writeRaster(cc_swe_mask, "/Volumes/JT/projects/uavsar/jemez/new_swe_calc/cc_25_swe_mask.tif")
+
+
+
+
+
+
+
+
+
+
+
 
 
 ####################################### 
