@@ -7,6 +7,7 @@ library(sf)
 library(sp)
 library(rgdal)
 library(dplyr)
+library(ggplot2)
  
 
 ### read in the ROUGH (is not an absolute change yet) SWE data
@@ -59,31 +60,85 @@ plot(feb26_gpr)
 points(feb26, col = "green", cex = .1)
 hist(feb26_gpr, breaks = 100)
 
+?as.points
 # create columns for cell numbers for each date
 # feb 12
-cell_numbers_feb12 <-cellFromXY(feb12_gpr, cbind(feb12_csv$Long, feb12_csv$Lat))
-feb12_csv <-cbind(feb12_csv, cell_numbers_feb12)
+cell_numbers_feb12 <-as.integer(cellFromXY(feb12_gpr, cbind(feb12_csv$Long, feb12_csv$Lat)))
+uavsar_swe <-extract(feb12_gpr, cell_numbers_feb12, cells = TRUE, xy = TRUE)
+feb12_csv <-cbind(feb12_csv, cell_numbers_feb12, uavsar_swe)
 head(feb12_csv)
-feb12_cells <-cells(feb12_gpr)
+#write.table(feb12_csv, "/Volumes/JT/2021_1_fall_UNR/agu/data/feb12_cells.csv")
 
-bp <- ggplot(feb12_cells, aes(x=cell_numbers, y=SWE_mm, group=cell_numbers)) + 
-  geom_boxplot(aes(fill=dose))
-bp
+# change cell number to 1 - how many ever there or for plotting purposes
+feb12_cells <-as.integer(cells(feb12_gpr))
+cell_seq <-as.integer(seq(1,220,1))
+new_cell_numbers <-as.data.frame(cell_numbers_feb12)
+
+# for (i in 1:length(cell_seq)){
+#   new_cell_numbers[new_cell_numbers == feb12_cells[i]] <- cell_seq[i]
+# }
+
+# tail(feb12_cells)
+# names(new_cell_numbers)[1]<-"cell_number"
+# hist(new_cell_numbers$cell_number)
 
 # feb 20
 cell_numbers_feb20 <-cellFromXY(feb20_gpr, cbind(feb20_csv$Long, feb20_csv$Lat))
 feb20_csv <-cbind(feb20_csv, cell_numbers_feb20)
 head(feb20_csv)
+#write.table(feb20_csv, "/Volumes/JT/2021_1_fall_UNR/agu/data/feb20_cells.csv")
 feb20_cells <-cells(feb20_gpr)
 
 # feb 26
 cell_numbers_feb26 <-cellFromXY(feb26_gpr, cbind(feb26_csv$Long, feb26_csv$Lat))
 feb26_csv <-cbind(feb26_csv, cell_numbers_feb26)
 head(feb26_csv)
+#write.table(feb26_csv, "/Volumes/JT/2021_1_fall_UNR/agu/data/feb26_cells.csv")
 feb26_cells <-cells(feb26_gpr)
 
 
-###### testing plotting by cell number
+##############################################
+###### testing plotting by cell number #######
+##############################################
+
+mini_feb12 <-filter(feb12_csv, cell_numbers_feb12 == 2096)
+mini_feb20 <-filter(feb20_csv, cell_numbers_feb20 == 2096)
+mini_feb26 <-filter(feb26_csv, cell_numbers_feb26 == 2096)
+
+ggplot() + 
+  geom_pointrange(feb12_csv, mapping = aes(x = cell_numbers_feb12, y = SWE_mm, group = cell_numbers_feb12),
+                  stat = "summary",
+                  fun.min = function(z) { quantile(z,0.25) },
+                  fun.max = function(z) { quantile(z,0.75) },
+                  fun = median,
+                  size = .2,
+                  color = "firebrick")+
+  geom_pointrange(feb20_csv, mapping = aes(x = cell_numbers_feb20, y = SWE_mm, group = cell_numbers_feb20),
+                  stat = "summary",
+                  fun.min = function(z) { quantile(z,0.25) },
+                  fun.max = function(z) { quantile(z,0.75) },
+                  fun = median,
+                  size = .2,
+                  color = "black")+
+  geom_point(feb12_csv, mapping = aes(x = cell_numbers_feb12, y = lyr.1, group = cell_numbers_feb12)) 
+  geom_pointrange(mini_feb26, mapping = aes(x = cell_numbers_feb26, y = SWE_mm, group = cell_numbers_feb26),
+                  stat = "summary",
+                  fun.min = function(z) { quantile(z,0.25) },
+                  fun.max = function(z) { quantile(z,0.75) },
+                  fun = median,
+                  size = .2,
+                  color = "green")
+
+ggsave(p1,
+       file = "jemez_pit_density2.png",
+       width = 7, 
+       height = 4,
+       dpi = 400)
+
+
+
+
+
 
 
 swe_matix <-matrix(swe_crop, nrow = 62)
