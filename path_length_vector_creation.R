@@ -1,14 +1,9 @@
 # create path length raster
-# updated sept 15th
+# redoing jan 27
 
-library(rgdal)
-library(data.table)
-library(caTools)
-library(sf)
-library(ggmap)
 library(terra)
 
-setwd("/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/")
+setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan") 
 
 ###########################################################
 ##### read in look vector new geotiffs from python code ###
@@ -18,32 +13,19 @@ setwd("/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/")
 # in ENU (east, north, up) components.
 
 # up in meters
-up <-rast("/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_up.tif")
+up <-rast("/Users/jacktarricone/ch1_jemez_data/feb12-19_slc/BU/geocoded_up.tif")
 up
 plot(up)
 
 # north in meters
-north <-rast("/Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_north.tif")
+north <-rast("/Users/jacktarricone/ch1_jemez_data/feb12-19_slc/BU/geocoded_north.tif")
 north
 plot(north)
 
 # east in meters
-east <-rast("//Volumes/JT/projects/uavsar/jemez/look_vector/good_llh_vrt/geocoded_east.tif")
+east <-rast("/Users/jacktarricone/ch1_jemez_data/feb12-19_slc/BU/geocoded_east.tif")
 east
 plot(east)
-
-# stack just bc
-lvk_list <-list.files(pattern ="/*.tif", full.names = T)
-
-# delete raw rasters, check to make sure it's right onces numbers change when deleted
-lvk_list <-lvk_list[-1]
-lvk_list <-lvk_list[-2]
-lvk_list <-lvk_list[-3]
-
-# works
-lvk_stack <-rast(lvk_list)
-plot(lvk_stack)
-
 
 # function triangulate distance to plane from up and east rasters
 plv_km_convert <-function(east_rast, up_rast, north_rast){
@@ -57,7 +39,8 @@ return(plv_km)
 
 # convert
 plv_km <-plv_km_convert(east,up,north)
+values(plv_km)[values(plv_km) == 0] = NA
 plot(plv_km)
 plv_km
-writeRaster(plv_km, "/Volumes/JT/projects/uavsar/jemez/look_vector/plv_km_good.tif")
+# writeRaster(plv_km, "plv_km_good.tif")
 

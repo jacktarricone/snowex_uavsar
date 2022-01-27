@@ -16,6 +16,7 @@ dem <-rast(tifs[4])
 unw <-rast(tifs[5])
 
 ##### clean rasters
+# set saving location
 setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan") 
 
 # amp1
@@ -48,4 +49,7 @@ values(dem)[values(dem) == -10000] = NA
 plot(dem)
 # writeRaster(dem, "dem_feb12-19.tif")
 
+test_stack <-c(amp1_dB, amp2_dB, unw, cor, dem)
+test_stack
+plot(test_stack)
 

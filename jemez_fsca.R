@@ -1,51 +1,29 @@
-# fsca transformation (need to see if i did this right)
-# 3/23
+# fsca transformation 
+# jan 27th, 2022
 
-library(raster)
-library(data.table)
-library(rgdal)
-library(gdalUtils)
-library(sp)
-library(caTools)
-library(rgdal)
-library(rgeos)
-library(ggplot2)
+library(terra)
 
 #bring in DEM
-jemez_DEM <-raster("/Volumes/JT/projects/uavsar/jemez/raw_data/02122020_02192020/DEM/alamos_35915_20005-003_20008-000_0007d_s01_L090HH_01.hgt.grd.tiff")
-values(jemez_DEM)[values(jemez_DEM) == -10000] = NA
-hist(jemez_DEM)
-jemez_DEM
+dem <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/dem_feb12-19.tif")
+dem
 
+# bringg in raw fSCA data downloaded from landsat web portal
+fsca_raw <-rast("/Users/jacktarricone/ch1_jemez_data/landsat_fsca/LC08_CU_010012_20200218_20200227_C01_V01_SNOW/LC08_CU_010012_20200218_20200227_C01_V01_SNOW.tif")
+fsca_raw # check
+values(fsca_raw)[values(fsca_raw) == 0] = NA # 0 to NaN
+fsca_raw <-fsca_raw/10 # correct [%] scale
+plot(fsca_raw) # test plot
 
-# bring in merged fsca, should do this in R next time so i know how
+# resample, crop, and mask
+fsca_crop <-resample(fsca_raw, dem)
+fsca <-mask(fsca_crop, dem, maskvalue = NA)
 
-#fsca <-raster("/Volumes/JT/projects/uavsar/jemez/fsca/jemez_fsca.tif")
-#values(fsca)[values(fsca) == 0] = NA
-
-# bring in single image that is what we need
-fsca_raw <-raster("/Volumes/JT/projects/uavsar/jemez/fsca/02_18_2020/LC08_CU_010012_20200218_20200227_C01_V01_SNOW/LC08_CU_010012_20200218_20200227_C01_V01_SNOW.tif")
-fsca <-projectRaster(fsca_raw,
-                     crs=crs("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-fsca #check 
-fsca_raw # compare
-values(fsca)[values(fsca) == 0] = NA
-
-#test plot with DEM, this looks good but resolution all off?
+# test plot
 plot(dem)
 plot(fsca, add=TRUE)
 
-#crop to DEM
-fsca_crop <-crop(fsca, insar_stack)
-plot(fsca_crop)
-hist(fsca_crop)
-
-plot(dem)
-plot(fsca_crop, add=TRUE)
-
-# resample to get down to DEM res and save it
-fsca_crop_resamp <- resample(fsca_crop, insar_stack, method='bilinear')
-fsca_crop_resamp
+#save
+writeRaster(fsca, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/landsat_fsca_2-18.tif")
 
 # mask for cor values and save it
 fsca_final <-mask(fsca_crop_resamp, cor, maskvalue = NA)
