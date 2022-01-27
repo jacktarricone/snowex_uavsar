@@ -15,7 +15,7 @@ fsca_raw <-fsca_raw/10 # correct [%] scale
 plot(fsca_raw) # test plot
 
 # resample, crop, and mask
-fsca_crop <-resample(fsca_raw, dem)
+fsca_crop <-resample(fsca_raw, dem, method = "bilinear")
 fsca <-mask(fsca_crop, dem, maskvalue = NA)
 
 # test plot
@@ -23,7 +23,18 @@ plot(dem)
 plot(fsca, add=TRUE)
 
 #save
-writeRaster(fsca, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/landsat_fsca_2-18.tif")
+# writeRaster(fsca, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/landsat_fsca_2-18.tif")
+
+
+
+
+
+
+
+
+
+
+# old code
 
 # mask for cor values and save it
 fsca_final <-mask(fsca_crop_resamp, cor, maskvalue = NA)
