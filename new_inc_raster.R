@@ -15,21 +15,14 @@
 # pacakages in r or python for calculating gradients and surface normals
 
 ## October 25th 2021
-
-?aggregate
+# updated january 27th
 
 library(terra)
-library(rgdal)
 
 # bring in filtered dem, bare earth no strees
-ele_filt <-rast("/Volumes/JT/projects/uavsar/jemez/lidar/ele_filt/GISdata/JemezRiver/lidar/snow_off/valles_elev_filt.img")
+ele_filt <-rast("/Users/jacktarricone/ch1_jemez_data/jemez_lidar/valles_elev_filt.img")
 ele_filt <-max(ele_filt)
 plot(ele_filt, col = terrain.colors(3000))
-
-# bring in unfiltered dem, has vegetatoin
-ele_unfilt <-rast("/Volumes/JT/projects/uavsar/jemez/lidar/ele_unfilt/GISdata/JemezRiver/lidar/snow_off/valles_elev_unfilt.img")
-ele_unfilt <-max(ele_unfilt)
-plot(ele_unfilt,col = terrain.colors(3000))
 
 # generate slope image from filtered DEM
 slope_deg <-terrain(ele_filt, v="slope", unit="degrees", neighbors=8)
@@ -42,8 +35,7 @@ plot(aspect_deg)
 # writeRaster(aspect_deg, "/Volumes/JT/projects/uavsar/jemez/lidar/jemez_lidar_aspect_deg.tif")
 
 ## 
-uavsar_dem <-rast("/Volumes/JT/projects/uavsar/jemez/raw_data/02122020_02192020/DEM/alamos_35915_20005-003_20008-000_0007d_s01_L090HH_01.hgt.grd.tiff")
-values(uavsar_dem)[values(uavsar_dem) == -10000] = NA
+uavsar_dem <-rast("dem_feb12-19.tif")
 uavsar_dem
 
 ele_latlon <-resample(ele_filt, uavsar_dem, method = "bilinear")
