@@ -6,49 +6,55 @@
 
 # jack tarricone
 # december 2nd, 2021
+# updated jan 28th
 
 library(terra)
 library(ggplot2)
 
+# set home folder
+setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
+list.files() #pwd
+
+
 # import corrected unwrapped phase data
-unw <-rast("/Volumes/JT/projects/uavsar/jemez/look_vector/unw_plv_corrected.tif")
-crop_ext <-ext(-106.57, -106.38, 35.81, 35.96) # set crop extent
+unw <-rast("unw_corrected_feb12-19.tif")
 unw
 plot(unw)
 
 
 # import i_angle raster
-lidar_inc_raw <-rast("/Volumes/JT/projects/uavsar/jemez/new_inc/lidar_inc_deg.tif")
-lidar_inc_raw <-resample(lidar_inc_raw, unw) #resample inc angle up to unw
+lidar_inc_raw <-rast("lidar_inc_deg.tif")
+
+# resample inc angle up to unw
+lidar_inc_raw <-resample(lidar_inc_raw, unw)
+plot(lidar_inc_raw)
+
+# set crop extent and crop for better visualization
+crop_ext <-ext(-106.57, -106.38, 35.81, 35.96) 
 lidar_inc <-crop(lidar_inc_raw, crop_ext)
 plot(lidar_inc)
 
-# mask and crop unw
+# mask and crop unwrapped phase data down to extent on new inc angle raster
 unw_crop <-mask(unw, lidar_inc_raw)
 unw_crop <-crop(unw_crop, lidar_inc)
 plot(unw_crop)
 
-#bring in UAVSAR rasters
-insar_files <-list.files("/Volumes/JT/projects/uavsar/jemez/rasters/02122020_02192020/HH", full.names = TRUE)
-insar_files <-insar_files[-5] # delete .int
-insar_files <-insar_files[-5] # delete .unw
-insar_files
+####### bring in UAVSAR InSAR data
 
-# format UAVSAR files for analysis
-cor <-rast(insar_files[[3]])
-values(cor)[values(cor) == 0] = NA
+# cor
+cor <-rast("cor_feb12-19.tif")
 cor_crop <-mask(cor, lidar_inc_raw)
 cor_crop <-crop(cor, lidar_inc)
 plot(cor_crop)
 
 # lidar dem
-dem <-rast("/Volumes/JT/projects/uavsar/jemez/lidar/lidar_uavsar_dem_resamp.tif")
-dem_crop <-crop(dem, lidar_inc)
-plot(dem_crop)
+# dem <-rast("/Volumes/JT/projects/uavsar/jemez/lidar/lidar_uavsar_dem_resamp.tif")
+# dem_crop <-crop(dem, lidar_inc)
+# plot(dem_crop)
 
 # test plot all the needed data - unw, dem, cor, inc
 plot(unw_crop)
-plot(dem_crop, add = TRUE)
+# plot(dem_crop, add = TRUE)
 plot(cor_crop, add = TRUE)
 plot(lidar_inc, add = TRUE)
 
@@ -56,9 +62,9 @@ plot(lidar_inc, add = TRUE)
 ####################################
 ###### bring in fsca layers ########
 ####################################
-
+list.files()
 # fsca
-fsca <-rast("/Volumes/JT/projects/uavsar/jemez/fsca/02_18_2020/fsca_final.tif")
+fsca <-rast("landsat_fsca_2-18.tif")
 ext(fsca) <-ext(unw)
 plot(fsca)
 
@@ -127,7 +133,7 @@ plot(insar_constant_rast)
 delta_swe_raw <-insar_constant_rast*unw_crop
 plot(delta_swe_raw)
 hist(delta_swe_raw, breaks = 100)
-writeRaster(delta_swe_raw,"/Volumes/JT/2021_1_fall_UNR/agu/data/delta_swe_raw_new.tif")
+# writeRaster(delta_swe_raw,"delta_swe_raw.tif")
 
 # calculating absolute SWE change
 # bulk density change of -.7 cm from the 12th to 19th
@@ -135,20 +141,20 @@ writeRaster(delta_swe_raw,"/Volumes/JT/2021_1_fall_UNR/agu/data/delta_swe_raw_ne
 # this meathod is up for debate....
 
 delta_swe_abs <-delta_swe_raw - (0.0187817 + .7)
-writeRaster(delta_swe_abs,"/Volumes/JT/2021_1_fall_UNR/agu/data/delta_swe_abs_new.tif")
+writeRaster(delta_swe_abs,"delta_swe_feb12-19v1.tif")
 plot(delta_swe_abs)
 hist(delta_swe_abs, breaks = 100)
 
 # maske for canopy cover so we get just unforested areas
-cc <-rast("/Volumes/JT/projects/uavsar/jemez/nlcd/cc_final.tif")
-ext(cc) <-ext(delta_swe_rast)
-values(cc)[values(cc) >25] = NA
-cc_25_swe_mask <- mask(delta_swe_rast, cc, maskvalue = NA)
-plot(cc_25_swe_mask)
+# cc <-rast("cc_percent.tif")
+# ext(cc) <-ext(delta_swe_abs)
+# values(cc)[values(cc) >25] = NA
+# cc_25_swe_mask <- mask(delta_swe_abs, cc, maskvalue = NA)
+# plot(cc_25_swe_mask)
 #writeRaster(cc_swe_mask, "/Volumes/JT/projects/uavsar/jemez/new_swe_calc/cc_25_swe_mask.tif")
 
 
-
+list.files()
 
 
 
