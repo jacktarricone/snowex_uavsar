@@ -1,64 +1,52 @@
 ####### atmospheric correction #######
+# for the feb 12th - feb 19th jemez data
+# updated jan 28th
 
 
 library(terra)
-library(tidyverse)
-library(data.table)
+library(ggplot2)
+
+# set home folder
+setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
+list.files() #pwd
 
 # path length raster 
-plv_km <-rast("/Volumes/JT/projects/uavsar/jemez/look_vector/plv_km_good.tif")
+plv_km <-rast("plv_km.tif")
 plv_km
 plot(plv_km)
-plot(unw)
 
-#bring in UAVSAR rasters from the 2/12-2/19 pair
-files <-list.files("/Volumes/JT/projects/uavsar/jemez/rasters/02122020_02192020/HH/", pattern = "*.grd.tiff", full.names = TRUE)
-files <-files[-4] # delete .hgt
-files <-files[-4] # delete .int
-files # check
-stack_raw <-rast(files) # stack
-stack_raw # inspect
+##############
+### bring in all the insar data 
+##############
 
-## clean rasters
-amp1 <-stack_raw[[1]]
-values(amp1)[values(amp1) == 0] = NA
-plot(amp1)
-
-amp2 <-stack_raw[[2]]
-values(amp1)[values(amp1) == 0] = NA
-plot(amp1)
+# unw
+unw_raw <-rast("unw_raw_feb12-19.tif")
+unw_raw
+plot(unw_raw)
 
 # cor
-cor <-stack_raw[[3]]
-values(cor)[values(cor) == 0] = NA
+cor <-rast("cor_feb12-19.tif")
+cor
 plot(cor)
 
-# define unw and one with NA's zeroed
-unw_raw <-stack_raw[[4]]
-unw <-unw_raw
-values(unw)[values(unw) == 0] = NA
-hist(unw, breaks = 100)
-
-plot(unw)
-plot(plv_km, add = TRUE)
 
 #########################################
 ## resample and crop to one size ########
 #########################################
 
 # resample look vector to unwrapped phase
-plv_resamp <-resample(plv_km, unw, method = "bilinear")
+plv_resamp <-resample(plv_km, unw_raw, method = "bilinear")
 plv_resamp
 ext(plv_resamp) <-ext(unw) # set extent as same as unw
 plv_resamp
 
 # test plot
-plot(unw)
+plot(unw_raw)
 plot(plv_resamp, add = TRUE)
 
 #### crop down to largest size possible with all overlapping pixels
 # create new rast, set non NA values to 0 for unw
-unw_non_na <-unw
+unw_non_na <-unw_raw
 values(unw_non_na)[!is.na(unw_non_na[])] = 1
 plot(unw_non_na)
 
@@ -73,11 +61,11 @@ plv_unw_mask <-terra::mask(unw_non_na, plv_crop1, maskvalues=NA)
 
 # test plot, looks good
 plot(plv_resamp)
-plot(unw, add = TRUE)
+plot(unw_raw, add = TRUE)
 plot(plv_unw_mask, add = TRUE)
 
 # mask both unw and plv with the mask
-unw_masked <-terra::mask(unw, plv_unw_mask, maskvalues=NA)
+unw_masked <-terra::mask(unw_raw, plv_unw_mask, maskvalues=NA)
 plot(unw_masked)
 
 plv_masked <-terra::mask(plv_resamp, plv_unw_mask, maskvalues=NA)
@@ -92,7 +80,7 @@ plot(plv_masked, add = TRUE)
 # we do this because we're assuming there is some snow signal combine with atm signal in no pixels
 # by doing just these, in theory we're just focusing on the atmospheric protion
 
-no_snow_mask <-rast("/Volumes/JT/projects/uavsar/jemez/new_swe_calc/02_18_2020_no_snow_mask.tif")
+no_snow_mask <-rast("landsat_fsca_2-18.tif")
 plot(no_snow_mask, add = TRUE)
 
 # clip edges off no snow mask to make it same size as plv and unw
@@ -149,11 +137,11 @@ p9 <-ggplot(no_snow_unw_plv_df, aes(x, unwrapped_phase)) +
 print(p9)
 
 # save
-#ggsave(p9,
-file = "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_unw_vs_lon.png",
-width = 6, 
-height = 4,
-dpi = 400)
+# ggsave(p9,
+# file = "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_unw_vs_lon.png",
+# width = 6, 
+# height = 4,
+# dpi = 400)
 
 ########################3 plot path length vs longitude
 
@@ -173,13 +161,14 @@ p10 <-ggplot(no_snow_unw_plv_df, aes(x, plv_km)) +
         panel.border = element_blank())
 print(p10)
 
-# unwrapped phase vs longitude
+##### unwrapped phase vs longitude
+
 # save
-#ggsave(p10,
-file = "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_plv_vs_lon.png",
-width = 6, 
-height = 4,
-dpi = 400)
+# ggsave(p10,
+# file = "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_plv_vs_lon.png",
+# width = 6, 
+# height = 4,
+# dpi = 400)
 
 
 # plot unw vs plk
@@ -331,20 +320,22 @@ p12 <-ggplot(no_snow_unw_plv_df, aes(plv_km, unwrapped_phase)) +
         panel.border = element_blank())
 print(p12)
 
-#ggsave(p12,
-       file = "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_plv_vs_unw.png",
-       width = 6, 
-       height = 4,
-       dpi = 400)
+# ggsave(p12,
+#         file = "no_snow_plv_vs_unw.png",
+#         width = 6, 
+#         height = 4,
+#         dpi = 400)
 
 
-### correct unw data using path length
+### correct unw data using path length and the linear estimation we generated
+
 path_length_correction <-function(unw, plv){return((unw - ((plv * coef(lm_fit)[[2]]) + coef(lm_fit)[[1]])))}
 unw_corrected <-path_length_correction(unw_masked, plv_masked)
 plot(unw_corrected)
 
-writeRaster(unw_corrected, "/Volumes/JT/projects/uavsar/jemez/look_vector/unw_plv_corrected.tif", overwrite = TRUE)
+writeRaster(unw_corrected, "unw_corrected_feb12-19.tif")
 
+# test plot with corrected data
 
 unw_corrected_df <-as.data.frame(unw_corrected, xy=TRUE, cells=TRUE, na.rm=TRUE)
 colnames(unw_corrected_df)[4] <- "unwrapped_phase"
@@ -366,8 +357,10 @@ p13 <-ggplot(unw_corrected_df, aes(x, unwrapped_phase)) +
         panel.grid.minor = element_blank(),
         panel.border = element_blank())
 print(p13)
+
+
 ggsave(p13,
-file = "/Volumes/JT/projects/uavsar/jemez/look_vector/jemez_phase_corrected.png",
-width = 6, 
-height = 4,
-dpi = 400)
+       file = "jemez_phase_corrected.png",
+       width = 6, 
+       height = 4,
+       dpi = 400)
