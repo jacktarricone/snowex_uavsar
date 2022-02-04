@@ -47,3 +47,20 @@ ggplot(plotting_df) +
   geom_point(aes(y = unw, x = feb20_minus_feb121))
 
 
+# bring in 19-26th pair
+unw_feb19_26 <-rast(" /Users/jacktarricone/ch1_jemez_data/feb19-26v2/alamos_35915_20008-000_20013-000_0007d_s01_L090HH_02.unw.grd")
+values(unw_feb19_26)[values(unw_feb19_26) == 0] <-NA
+plot(unw_feb19_26)
+
+# resample and mask
+unw2_resamp <-resample(unw_feb19_26, unw_feb12_19, method = "bilinear")
+unw1_final <-mask(unw_feb12_19, unw2_resamp, maskvalues = NA)
+plot(unw1_final)
+plot(unw2_resamp, add = TRUE)
+unw2_final <-mask(unw2_resamp, unw_mask, maskvalues = NA)
+plot(unw1_final)
+plot(unw2_final, add = TRUE)
+writeRaster(unw1_final, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw1_final.tif")
+writeRaster(unw2_final, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw2_final.tif")
+
+
