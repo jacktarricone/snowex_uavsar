@@ -28,7 +28,7 @@ unw_mask <-mask(unw_crop, gpr, maskvalues = NA)
 gpr_mask <-mask(gpr, unw_mask, maskvalues = NA)
 
 # test plot 
-plot(unw_gprmask)
+plot(unw_mask)
 plot(gpr_mask, add = TRUE)
 
 # convert raster to dataframe
@@ -52,15 +52,26 @@ unw_feb19_26 <-rast(" /Users/jacktarricone/ch1_jemez_data/feb19-26v2/alamos_3591
 values(unw_feb19_26)[values(unw_feb19_26) == 0] <-NA
 plot(unw_feb19_26)
 
-# resample and mask
-unw2_resamp <-resample(unw_feb19_26, unw_feb12_19, method = "bilinear")
-unw1_final <-mask(unw_feb12_19, unw2_resamp, maskvalues = NA)
+##### resample and mask
+# resample 19-26 to the 12-19 grid, slightly off for some reason
+unw2_resamp <-resample(unw_feb19_26, unw_feb12_19, method = "bilinear") 
+unw1_final <-mask(unw_feb12_19, unw2_resamp, maskvalues = NA) # mask for only same pixels
+
+# test plot of both pairs
 plot(unw1_final)
 plot(unw2_resamp, add = TRUE)
-unw2_final <-mask(unw2_resamp, unw_mask, maskvalues = NA)
-plot(unw1_final)
+
+# remask to sites will have the exact same pixels
+unw2_final <-mask(unw2_resamp, unw1_final, maskvalues = NA)
+plot(unw1_final) # test
 plot(unw2_final, add = TRUE)
-writeRaster(unw1_final, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw1_final.tif")
-writeRaster(unw2_final, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw2_final.tif")
+
+# cumulative phase
+unw_cum <-unw1_final+unw2_final
+
+# save rasters
+# writeRaster(unw1_final, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw1_final.tif")
+# writeRaster(unw2_final, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw2_final.tif")
+# writeRaster(unw_cum, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw_cum.tif")
 
 
