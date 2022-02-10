@@ -78,7 +78,8 @@ unw_cm <-unw1_final+unw2_final
 #######
 #######
 ## bring in added phase raster aka 2/12-2/26
-# unw_cm <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw_cm.tif")
+unw_cm <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw_cm.tif")
+plot(unw_cm)
 
 # bring in 2/12-2/26 gpr data
 feb26_minus_feb12 <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/Rasters_for_Jack/feb26_minus_feb121.tif")
@@ -104,11 +105,8 @@ plot(f26_m_12_mask, add = TRUE, col = hcl.colors(12, "Berlin"))
 # convert raster to dataframe
 unw_df_cm <-as.data.frame(unw_cm_crop_mask, xy = TRUE, cells = TRUE, na.rm = TRUE)
 gpr_df_cm <-as.data.frame(f26_m_12_mask, xy = TRUE, cells = TRUE, na.rm = TRUE)
-head(unw_df_cm)
 head(gpr_df_cm)
-tail(unw_df_cm)
-tail(gpr_df_cm)
-
+head(unw_df_cm)
 
 # bind the data frames
 cm_plotting_df <-cbind(unw_df_cm, gpr_df_cm$feb26_minus_feb121)
@@ -120,24 +118,22 @@ head(cm_plotting_df)
 # test plot
 theme_set(theme_light(11)) # set theme
 
-scat1<-ggplot(cm_plotting_df) +
-  geom_abline(slope = 1) +
+ggplot(cm_plotting_df) +
+  #geom_abline(slope = 1) +
   geom_point(aes(y = unw, x = gpr_twt_change_ns), color = "firebrick") +
   xlim(-4,2) +  ylim(-3,2) +
   labs(title = "Change in UNW vs. GPR TWT 2/12 - 2/26",
        x = Delta~"TWT [ns]",
        y = Delta~"Unwrapped Phase [rad]")
-print(scat1)
 
-setwd("/Users/jacktarricone/ch1_jemez_data/plots")
-ggsave(scat1,
-        file = "/Users/jacktarricone/ch1_jemez_data/plots/unw_vs_twt_2/12-2/26.png",
-        width = 5, 
-        height = 5,
-        units = "in",
-        dpi = 300)
-?dev
-# add lm
+# save image, doesnt like back slahes in the name bc it's a file path... idk
+ggsave("unw_vs_twt_feb12_26.png",
+       width = 5, 
+       height = 5,
+       units = "in",
+       dpi = 300)
+####
+
 cm_lm <-lm(unw ~ gpr_twt_change_ns, cm_plotting_df)
 summary(cm_lm)
 
