@@ -120,9 +120,23 @@ head(cm_plotting_df)
 # test plot
 theme_set(theme_light(11)) # set theme
 
-ggplot(cm_plotting_df) +
-  geom_point(aes(y = unw, x = gpr_twt_change_ns))
+scat1<-ggplot(cm_plotting_df) +
+  geom_abline(slope = 1) +
+  geom_point(aes(y = unw, x = gpr_twt_change_ns), color = "firebrick") +
+  xlim(-4,2) +  ylim(-3,2) +
+  labs(title = "Change in UNW vs. GPR TWT 2/12 - 2/26",
+       x = Delta~"TWT [ns]",
+       y = Delta~"Unwrapped Phase [rad]")
+print(scat1)
 
+setwd("/Users/jacktarricone/ch1_jemez_data/plots")
+ggsave(scat1,
+        file = "/Users/jacktarricone/ch1_jemez_data/plots/unw_vs_twt_2/12-2/26.png",
+        width = 5, 
+        height = 5,
+        units = "in",
+        dpi = 300)
+?dev
 # add lm
 cm_lm <-lm(unw ~ gpr_twt_change_ns, cm_plotting_df)
 summary(cm_lm)
