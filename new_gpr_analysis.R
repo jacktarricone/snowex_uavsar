@@ -75,3 +75,9 @@ unw_cum <-unw1_final+unw2_final
 # writeRaster(unw_cum, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw_cum.tif")
 
 
+#######
+#######
+## bring in added phase raster aka 2/12-2/26
+# unw_cum <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/unw_cum.tif")
+
+# bring in 2/12-2/26 gpr rdata
