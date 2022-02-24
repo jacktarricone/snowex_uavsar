@@ -126,28 +126,34 @@ ggplot(pair_1) +
 
 
 #### plot for ryan
-insar <-filter(pair_1, date >= "2020-02-10" & date <="2020-02-26")
+insar <-filter(pair_1, date >= "2020-02-01" & date <="2020-02-26")
 flight1 <-as.numeric(insar$date_time[58]) # row for correct date time
 flight2 <-as.numeric(insar$date_time[226])
 flight3 <-as.numeric(insar$date_time[394])
 
-lims <- as.POSIXct(strptime(c("2020-02-10 00:00:00", "2020-02-27 00:00:00"), 
+lims <- as.POSIXct(strptime(c("2020-02-01 00:00:00", "2020-02-27 00:00:00"), 
                             format = "%Y-%m-%d %H:%M:%S"))
 
 ggplot(insar) +
-  # geom_point(aes(x = date_time, y = depth_lvl_3, col = "red"), size = .3) +
-  geom_line(aes(x = date_time, y = sd_interp_v3_smooth20))+
+  geom_point(aes(x = date_time, y = depth_lvl_3), col = "green", size = .3) +
+  geom_line(aes(x = date_time, y = sd_interp_v3_smooth10))+
   geom_vline(xintercept = flight1, linetype=3, col = "red", alpha = .7) +
   geom_vline(xintercept = flight2, linetype=3, col = "red", alpha = .7) +
   geom_vline(xintercept = flight3, linetype=3, col = "red", alpha = .7) +
-  annotate("text", label = "Flight 1 (2/12)", x = insar$date_time[55], y = 700, col = "red") +
-  annotate("text", label = "Flight 2 (2/19)", x = insar$date_time[222], y = 700, col = "red") +
-  annotate("text", label = "Flight 3 (2/19)", x = insar$date_time[390], y = 700, col = "red") +
+  annotate("text", label = "Flight 1 (2/12)", x = insar$date_time[270], y = 700, col = "red") +
+  annotate("text", label = "Flight 2 (2/19)", x = insar$date_time[437], y = 700, col = "red") +
+  annotate("text", label = "Flight 3 (2/19)", x = insar$date_time[605], y = 700, col = "red") +
   scale_x_datetime(limits = lims, 
-                   breaks = "3 day") +
-  labs(title = "HQ Met Snow Depth 2/10/20 - 2/27/20",
+                   breaks = "1 week") +
+  labs(title = "HQ Met Snow Depth 2/1/20 - 2/27/20",
        y = "Snow Depth [mm]",
        x = "Date")
 
+setwd("/Users/jacktarricone/ch1_jemez_data/plots")
+ggsave("hq_met_sd_v2.png",
+       width = 8, 
+       height = 5,
+       units = "in",
+       dpi = 300)
 
               
