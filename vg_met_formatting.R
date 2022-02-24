@@ -77,7 +77,7 @@ ggplot(pair_1) +
   geom_line(aes(x = date_time, y = snow_depth_mm))
 
 # save rough csv
-write.csv(vg_met_data, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/vg_met_data_v1.csv")
+# write.csv(vg_met_data, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/vg_met_data_v1.csv")
 
 
 
