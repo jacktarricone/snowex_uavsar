@@ -1,6 +1,3 @@
-CHECK INVERSION !!!!!!!!!!!!
-
-
 # SWE inversion for 2/19-2/26
 # path length corrected unwrapped phase data
 # lidar incidence angle raster
@@ -38,14 +35,6 @@ unw_crop <-mask(unw, lidar_inc_raw)
 unw_crop <-crop(unw_crop, lidar_inc)
 plot(unw_crop)
 
-####### bring in UAVSAR InSAR data
-
-# cor
-cor <-rast("cor_feb12-19.tif")
-cor_crop <-mask(cor, lidar_inc_raw)
-cor_crop <-crop(cor, lidar_inc)
-plot(cor_crop)
-
 ####################################
 ###### bring in fsca layers ########
 ####################################
@@ -68,7 +57,7 @@ plot(snow_mask)
 # writeRaster(snow_mask,"02_18_2020_snow_mask.tif")
 
 # masked the unwrapped phase with snow mask
-unw_snow_mask <- mask(unw_crop, snow_mask, maskvalue = NA)
+unw_snow_mask <-mask(unw_crop, snow_mask, maskvalue = NA)
 plot(unw_snow_mask)
 plot(unw_crop)
 
@@ -95,13 +84,13 @@ pit_info <-read.csv("/Users/jacktarricone/ch1_jemez_data/pit_data/perm_pits.csv"
 
 ## define static information from pits
 # calculate density
-mean_density_feb20 <- pit_info$mean_density[2]
-mean_density_feb26 <- pit_info$mean_density[3]
-mean_density_feb20_26 <-(mean_density_feb12 + mean_density_feb19)/2
+mean_density_feb20 <-pit_info$mean_density[2]
+mean_density_feb26 <-pit_info$mean_density[3]
+mean_density_feb20_26 <-(mean_density_feb20 + mean_density_feb26)/2
 
 # dielctric constant k
-k_feb20 <- pit_info$mean_k[2]
-k_feb26 <- pit_info$mean_k[3]
+k_feb20 <-pit_info$mean_k[2]
+k_feb26 <-pit_info$mean_k[3]
 mean_k_feb20_26 <-(k_feb20 +k_feb26)/2
 
 # radar wave length from uavsar annotation file
@@ -146,6 +135,6 @@ plot(delta_swe_abs)
 hist(delta_swe_abs, breaks = 100)
 
 # save
-writeRaster(delta_swe_abs,"TEST_delta_swe_feb19-26v1.tif")
+writeRaster(delta_swe_abs,"delta_swe_feb19-26_v2.tif")
 
 
