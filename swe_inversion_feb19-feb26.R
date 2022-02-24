@@ -1,3 +1,6 @@
+CHECK INVERSION !!!!!!!!!!!!
+
+
 # SWE inversion for 2/19-2/26
 # path length corrected unwrapped phase data
 # lidar incidence angle raster
