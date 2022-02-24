@@ -81,5 +81,73 @@ ggplot(pair_1) +
   # geom_point(aes(x = date_time, y = sd_interp, col = "red"), size = .3) +
   geom_line(aes(x = date_time, y = sd_interp_v2, col = "blue"), size = .3)
 
-write.csv(pair_1, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/snow_depth_qaqcv1.csv" )
+# write.csv(pair_1, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/snow_depth_qaqcv1.csv" )
 
+
+#### third filter!
+
+### filter again on the new data
+del_thresh = 5 # 5mm
+pair_1$delta_sd_interp_v2 <- c(0, diff(pair_1$sd_interp_v2))
+
+pair_1$depth_lvl_4 <- ifelse(pair_1$delta_sd_interp_v2 > del_thresh |
+                               pair_1$delta_sd_interp_v2 < (-1 * del_thresh) |
+                               is.na(pair_1$delta_sd_interp_v2),
+                               NA,
+                               pair_1$sd_interp_v2)
+
+# linearly interpolate between interpolated data, lol
+pair_1 <-filter(pair_1, X <= 1066)
+pair_1 <-data.frame(X = seq(pair_1$X[1], pair_1$X[nrow(pair_1)], by = 1)) %>%
+  full_join(pair_1, by = "X") %>%
+  mutate(sd_interp_v3 = na.approx(depth_lvl_4))
+
+# test plot with new data
+ggplot(pair_1) +
+  # geom_line(aes(x = date_time, y = snow_depth_mm))+
+  geom_point(aes(x = date_time, y = sd_interp_v2, col = "red"), size = .3) +
+  geom_line(aes(x = date_time, y = sd_interp_v3, col = "blue"), size = .3)
+
+
+######################
+# compute rolling mean
+######################
+
+pair_1$sd_interp_v3_smooth3 <- rollmeanr(pair_1$sd_interp_v3, 3, fill = NA)
+pair_1$sd_interp_v3_smooth10 <- rollmeanr(pair_1$sd_interp_v3, 10, fill = NA)
+pair_1$sd_interp_v3_smooth20 <- rollmeanr(pair_1$sd_interp_v3, 20, fill = NA)
+
+# test plot look good
+ggplot(pair_1) +
+  geom_point(aes(x = date_time, y = sd_interp_v2, col = "red"), size = .3) +
+  geom_line(aes(x = date_time, y = sd_interp_v3_smooth20 ))
+
+# write.csv(pair_1, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/snow_depth_qaqc_v2.csv" )
+
+
+#### plot for ryan
+insar <-filter(pair_1, date >= "2020-02-10" & date <="2020-02-26")
+flight1 <-as.numeric(insar$date_time[58]) # row for correct date time
+flight2 <-as.numeric(insar$date_time[226])
+flight3 <-as.numeric(insar$date_time[394])
+
+lims <- as.POSIXct(strptime(c("2020-02-10 00:00:00", "2020-02-27 00:00:00"), 
+                            format = "%Y-%m-%d %H:%M:%S"))
+
+ggplot(insar) +
+  # geom_point(aes(x = date_time, y = depth_lvl_3, col = "red"), size = .3) +
+  geom_line(aes(x = date_time, y = sd_interp_v3_smooth20))+
+  geom_vline(xintercept = flight1, linetype=3, col = "red", alpha = .7) +
+  geom_vline(xintercept = flight2, linetype=3, col = "red", alpha = .7) +
+  geom_vline(xintercept = flight3, linetype=3, col = "red", alpha = .7) +
+  annotate("text", label = "Flight 1 (2/12)", x = insar$date_time[55], y = 700, col = "red") +
+  annotate("text", label = "Flight 2 (2/19)", x = insar$date_time[222], y = 700, col = "red") +
+  annotate("text", label = "Flight 3 (2/19)", x = insar$date_time[390], y = 700, col = "red") +
+  scale_x_datetime(limits = lims, 
+                   breaks = "3 day") +
+  labs(title = "HQ Met Snow Depth 2/10/20 - 2/27/20",
+       y = "Snow Depth [mm]",
+       x = "Date")
+
+
+              
