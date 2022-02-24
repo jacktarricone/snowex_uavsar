@@ -1,4 +1,6 @@
-# SWE inversion for 2/19-2/26
+# SWE inversion for 2/12-2/19
+
+
 # path length corrected unwrapped phase data
 # lidar incidence angle raster
 # use change in HQ met SWE as 0 point
@@ -14,7 +16,7 @@ setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
 list.files() #pwd
 
 # import corrected unwrapped phase data
-unw <-rast("unw2_final.tif")
+unw <-rast("unw1_final.tif")
 unw
 plot(unw)
 
@@ -35,13 +37,7 @@ unw_crop <-mask(unw, lidar_inc_raw)
 unw_crop <-crop(unw_crop, lidar_inc)
 plot(unw_crop)
 
-####### bring in UAVSAR InSAR data
 
-# cor
-cor <-rast("cor_feb12-19.tif")
-cor_crop <-mask(cor, lidar_inc_raw)
-cor_crop <-crop(cor, lidar_inc)
-plot(cor_crop)
 
 ####################################
 ###### bring in fsca layers ########
@@ -66,8 +62,8 @@ plot(snow_mask)
 
 # masked the unwrapped phase with snow mask
 unw_snow_mask <- mask(unw_crop, snow_mask, maskvalue = NA)
-plot(unw_snow_mask)
 plot(unw_crop)
+plot(unw_snow_mask)
 
 ########################################################
 ######### converting phase change to SWE ##############
@@ -77,29 +73,25 @@ plot(unw_crop)
 # a method to systematically estimate these numbers
 # talk to HP about this
 
-###################################################################
-###################################################################
-###################################################################
+#######################################################################
 # don't pick denisty and di_elec value
-# pick a density and LWC (from ryans equations and field measurments)
+# pick a density and LWC (from ryans equations and field measurements)
 # vary density and LWC over range over measured values
-###################################################################
-###################################################################
-###################################################################
+########################################################################
 
 # table ryan sent over
 pit_info <-read.csv("/Users/jacktarricone/ch1_jemez_data/pit_data/perm_pits.csv")
 
 ## define static information from pits
 # calculate density
+mean_density_feb12 <- pit_info$mean_density[1]
 mean_density_feb20 <- pit_info$mean_density[2]
-mean_density_feb26 <- pit_info$mean_density[3]
-mean_density_feb20_26 <-(mean_density_feb12 + mean_density_feb19)/2
+mean_density_feb12_20 <-(mean_density_feb12 + mean_density_feb20)/2
 
 # dielctric constant k
+k_feb12 <- pit_info$mean_k[1]
 k_feb20 <- pit_info$mean_k[2]
-k_feb26 <- pit_info$mean_k[3]
-mean_k_feb20_26 <-(k_feb20 +k_feb26)/2
+mean_k_feb12_20 <-(k_feb12+k_feb20)/2
 
 # radar wave length from uavsar annotation file
 uavsar_wL <- 23.8403545
@@ -118,7 +110,7 @@ insar_constant <-function(inc, wL, density, k){
 
 # create the raster
 insar_constant_rast <-insar_constant(inc = lidar_inc, wL = uavsar_wL, 
-                                     density = mean_k_feb20_26, k = mean_k_feb20_26)
+                                     density = mean_density_feb12_20, k = mean_k_feb12_20)
 hist(insar_constant_rast)
 plot(insar_constant_rast)
 

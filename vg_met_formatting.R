@@ -65,8 +65,17 @@ vg_met_data <-vg_met_data[ -c(16:20) ]
 vg_met_data$date_time <-ymd_hms(vg_met_data$date_time)
 vg_met_data$date <-as.Date(vg_met_data$date)
 
+# save rough csv
+# write.csv(vg_met_data, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/vg_met_data_v1.csv")
+
+# read back in
+vg_met_data <-read.csv("/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/vg_met_data_v1.csv")
+vg_met_data$date_time <-ymd_hms(vg_met_data$date_time)
+vg_met_data$date <-as.Date(vg_met_data$date)
+
 # filter down to time range between insar pair one
-pair_1 <-filter(vg_met_data, date >= "2020-02-10" & date <="2020-02-20")
+pair_1 <-filter(vg_met_data, date >= "2020-02-12" & date <="2020-02-19")
+pair_1$snow_depth_mm[pair_1$snow_depth_mm < 550] <- NA 
 
 # test plot
 ggplot(vg_met_data) +
@@ -75,9 +84,6 @@ ggplot(vg_met_data) +
 # test plot pair 1
 ggplot(pair_1) +
   geom_line(aes(x = date_time, y = snow_depth_mm))
-
-# save rough csv
-# write.csv(vg_met_data, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/vg_met_data_v1.csv")
 
 
 
