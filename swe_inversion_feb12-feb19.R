@@ -118,7 +118,7 @@ plot(insar_constant_rast)
 delta_swe_raw <-insar_constant_rast*unw_crop
 plot(delta_swe_raw)
 hist(delta_swe_raw, breaks = 100)
-# writeRaster(delta_swe_raw,"delta_swe_raw_feb19_26.tif")
+writeRaster(delta_swe_raw,"raw_delta_swe_feb12_19.tif")
 
 
 #######################################
@@ -129,12 +129,22 @@ hist(delta_swe_raw, breaks = 100)
 # this meathod is up for debate....
 
 # FROM QGIS
-pit_phase_value <-0.0891383 ### GET REAL PIT LOCATION FROM RYAN
+pit_phase_value <- 0.0541057 ### GET REAL PIT LOCATION FROM RYAN
 delta_swe_abs <-delta_swe_raw - pit_phase_value
 plot(delta_swe_abs)
 hist(delta_swe_abs, breaks = 100)
 
 # save
-writeRaster(delta_swe_abs,"TEST_delta_swe_feb19-26v1.tif")
+# writeRaster(delta_swe_abs,"delta_swe_feb12-19_v1.tif")
 
+# create cumlative swe change raster, teathering numbers up for debate!!
+
+# read in rasters we just made
+delta_swe_feb19_26 <-rast("delta_swe_feb19-26_v2.tif")
+delta_swe_feb12_19 <-rast("delta_swe_feb12-19_v1.tif")
+
+# substract
+delta_swe_cum <-delta_swe_feb12_19 + delta_swe_feb19_26
+plot(delta_swe_cum)
+writeRaster(delta_swe_cum,"delta_swe_cum.tif")
 
