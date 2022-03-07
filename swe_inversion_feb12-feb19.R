@@ -13,7 +13,6 @@
 
 library(terra)
 library(ggplot2)
-library(sf)
 
 # set home folder
 setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
@@ -24,7 +23,7 @@ unw_raw <-rast("unw1_final.tif")
 unw_raw
 plot(unw_raw)
 
-# import i_angle raster
+# import i_angle raster and resample to unw grid bc of slight extent difference
 lidar_inc_raw <-rast("lidar_inc_deg.tif")
 lidar_inc_v1 <-resample(lidar_inc_raw, unw_raw)
 
@@ -36,9 +35,9 @@ lidar_inc <-crop(lidar_inc_v1, crop_ext)
 unw_crop <-crop(unw_raw, crop_ext)
 unw <-mask(unw_crop, lidar_inc)
 
-# test
+# plot results
 plot(lidar_inc)
-plot(unw, add = T)
+plot(unw)
 
 ####################################
 ###### bring in fsca layers ########
@@ -46,9 +45,9 @@ plot(unw, add = T)
 
 # fsca
 fsca_raw <-rast("landsat_fsca_2-18.tif")
-fsca_crop <-crop(fsca_raw, ext(lidar_inc))
 
-# crop to inc 
+# crop to .inc angle extent and mask
+fsca_crop <-crop(fsca_raw, ext(lidar_inc))
 fsca <-mask(fsca_crop, lidar_inc)
 plot(fsca)
 
@@ -59,17 +58,13 @@ plot(snow_mask)
 # writeRaster(snow_mask,"02_18_2020_snow_mask.tif")
 
 # masked the unwrapped phase with snow mask
-unw_snow_mask <- mask(unw_crop, snow_mask, maskvalue = NA)
-plot(unw_crop)
+unw_snow_mask <- mask(unw, snow_mask, maskvalue = NA)
+plot(unw)
 plot(unw_snow_mask)
 
 ########################################################
 ######### converting phase change to SWE ##############
 ########################################################
-
-# this is just a quick test again, will need to develop
-# a method to systematically estimate these numbers
-# talk to HP about this
 
 #######################################################################
 # don't pick denisty and di_elec value
@@ -84,39 +79,45 @@ pit_info <-read.csv("/Users/jacktarricone/ch1_jemez_data/pit_data/perm_pits.csv"
 # calculate density
 mean_density_feb12 <- pit_info$mean_density[1]
 mean_density_feb20 <- pit_info$mean_density[2]
+
+# mean density between two flights
 mean_density_feb12_20 <-(mean_density_feb12 + mean_density_feb20)/2
 
 # dielctric constant k
 k_feb12 <- pit_info$mean_k[1]
 k_feb20 <- pit_info$mean_k[2]
+
+# mean k between two flights
 mean_k_feb12_20 <-(k_feb12+k_feb20)/2
-
-# radar wave length from uavsar annotation file
-uavsar_wL <- 23.8403545
-
-
 
 #######################
 #### swe inversion ####
 #######################
 
-
 # first step, define function for insar constant
-insar_constant <-function(inc, wL, density, k){
-  ((-4*pi)/wL)*(cos(inc) - sqrt(k - sin((inc)^2)))
+
+# inc = incidence angle raster [deg]
+# wL = sensor save length [cm]
+# k = dielectric permittivty 
+
+# radar wave length from uavsar annotation file
+uavsar_wL <- 23.8403545
+
+insar_constant <-function(inc, wL, k){
+  (-(4*pi)/wL)*(cos(inc) - sqrt(k - sin((inc)^2)))
   }
 
-# create the raster
-insar_constant_rast <-insar_constant(inc = lidar_inc, wL = uavsar_wL, 
-                                     density = mean_density_feb12_20, k = mean_k_feb12_20)
-hist(insar_constant_rast)
+# create the insar constant raster
+# because of the variation of .inc angle, this value you will change on pixelwise basis
+insar_constant_rast <-insar_constant(inc = lidar_inc, wL = uavsar_wL, k = mean_k_feb12_20)
+hist(insar_constant_rast, breaks = 100)
 plot(insar_constant_rast)
 
 #do swe change calc with masked unwrapped phase data
-delta_swe_raw <-insar_constant_rast*unw_crop
-plot(delta_swe_raw)
-hist(delta_swe_raw, breaks = 100)
-writeRaster(delta_swe_raw,"raw_delta_swe_feb12_19.tif")
+dswe_raw <-insar_constant_rast*unw_snow_mask
+plot(dswe_raw)
+hist(dswe_raw, breaks = 100)
+# writeRaster(dswe_raw,"./final_swe_change/raw_dswe_feb12_19.tif")
 
 
 #######################################
@@ -124,30 +125,29 @@ writeRaster(delta_swe_raw,"raw_delta_swe_feb12_19.tif")
 #######################################
 
 # using swe change from the pit as "known" change point
-# this meathod is up for debate....
 
 # extent around gpr transect
 gpr <-ext(-106.5255, -106.521, 35.856, 35.8594)
-unw_gpr <-crop(unw, gpr)
-plot(unw_gpr)
+dswe_crop <-crop(delta_swe_raw, gpr)
+plot(dswe_crop)
 
 # pull out location info into separate df
 loc <-data.frame(lat = pit_info$lat[1],
                  lon = pit_info$lon[1])
 
-# create sf object
+# plot pit location using terra vector funcitonality
 pit_point <-vect(loc, geom = c("lon","lat"), crs = crs(unw))
 points(pit_point, cex = 1)
 
 # extract cell number from pit lat/lon point
-pit_cell_v1 <-cells(unw, pit_point)
+pit_cell_v1 <-cells(dswe_raw, pit_point)
 cell_number <-pit_cell_v1[1,2]
 
 # define neighboring cells by number and create a vector
 neighbor_cells <-c(adjacent(unw, cells = cell_number, directions ="8"))
 
 # add orginal cell back to vector
-cell_vector <-c(neighbor_cells, cell_number)
+cell_vector <-c(cell_number, neighbor_cells)
 
 # extract using that vector
 nine_cell_phase <-as.matrix(terra::extract(unw, cell_vector,  cells = TRUE, xy = TRUE))
