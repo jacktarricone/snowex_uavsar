@@ -7,7 +7,7 @@
 ## AVERAGE ALL PIXELS AROUND SNOWPIT TO GENERATE NO CHANGE POINT!!
 
 library(terra)
-library(ggplot2)
+library(ggplot2); theme_set(theme_classic(12)) # set theme
 library(dplyr)
 
 # bring in gpr
@@ -39,7 +39,7 @@ plot(gpr_mask, add = TRUE, col = "red")
 
 # convert raster to dataframe
 gpr_df <-as.data.frame(gpr_mask, xy = TRUE, cells = TRUE, na.rm = TRUE)
-unw_df <-as.data.frame(unw_mask, xy = TRUE, cells = TRUE, na.rm = TRUE)
+unw_df <-as.data.frame(i_swe_mask, xy = TRUE, cells = TRUE, na.rm = TRUE)
 head(unw_df)
 
 # bind the data frames
@@ -48,7 +48,6 @@ colnames(plotting_df)[5] <- "unw" # rename col 5
 head(plotting_df)
 
 # test plot
-theme_set(theme_light(11)) # set theme
 ggplot(plotting_df) +
   geom_point(aes(y = unw, x = feb20_minus_feb121))
 
