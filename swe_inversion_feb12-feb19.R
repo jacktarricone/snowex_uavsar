@@ -8,6 +8,8 @@
 # jack tarricone
 # feb23, 2021
 
+# update march 7th using pit location!
+
 library(terra)
 library(ggplot2)
 
@@ -16,46 +18,40 @@ setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
 list.files() #pwd
 
 # import corrected unwrapped phase data
-unw <-rast("unw1_final.tif")
-unw
-plot(unw)
+unw_raw <-rast("unw1_final.tif")
+unw_raw
+plot(unw_raw)
 
 # import i_angle raster
 lidar_inc_raw <-rast("lidar_inc_deg.tif")
-
-# resample inc angle up to unw
-lidar_inc_raw <-resample(lidar_inc_raw, unw)
-plot(lidar_inc_raw)
+lidar_inc_v1 <-resample(lidar_inc_raw, unw_raw)
 
 # set crop extent and crop for better visualization
 crop_ext <-ext(-106.57, -106.38, 35.81, 35.96) 
-lidar_inc <-crop(lidar_inc_raw, crop_ext)
-plot(lidar_inc)
+lidar_inc <-crop(lidar_inc_v1, crop_ext)
 
 # mask and crop unwrapped phase data down to extent on new inc angle raster
-unw_crop <-mask(unw, lidar_inc_raw)
-unw_crop <-crop(unw_crop, lidar_inc)
-plot(unw_crop)
+unw_crop <-crop(unw_raw, crop_ext)
+unw <-mask(unw_crop, lidar_inc)
 
-
+# test
+plot(lidar_inc)
+plot(unw, add = T)
 
 ####################################
 ###### bring in fsca layers ########
 ####################################
 
 # fsca
-fsca <-rast("landsat_fsca_2-18.tif")
-ext(fsca) <-ext(unw)
-plot(fsca)
+fsca_raw <-rast("landsat_fsca_2-18.tif")
+fsca_crop <-crop(fsca_raw, ext(lidar_inc))
 
 # crop to inc 
-fsca_crop <-mask(fsca, lidar_inc_raw)
-fsca_crop <-crop(fsca_crop, lidar_inc)
-plot(fsca_crop)
-fsca_crop
+fsca <-mask(fsca_crop, lidar_inc)
+plot(fsca)
 
 # create snow mask
-snow_mask <-fsca_crop
+snow_mask <-fsca
 values(snow_mask)[values(snow_mask) > 1] = 1
 plot(snow_mask)
 # writeRaster(snow_mask,"02_18_2020_snow_mask.tif")
