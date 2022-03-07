@@ -166,7 +166,7 @@ plot(dswe_abs)
 hist(dswe_abs, breaks = 100)
 
 # save
-# writeRaster(delta_swe_abs,"./final_swe_change/dswe_feb12-19.tif")
+writeRaster(dswe_abs,"./final_swe_change/dswe_feb12-19.tif")
 
 # create cumlative swe change raster, teathering numbers up for debate!!
 
