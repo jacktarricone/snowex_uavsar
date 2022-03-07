@@ -19,7 +19,7 @@ setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
 list.files() #pwd
 
 # import corrected unwrapped phase data
-unw_raw <-rast("unw1_final.tif")
+unw_raw <-rast("unw_corrected_feb12-19.tif")
 unw_raw
 plot(unw_raw)
 
@@ -75,13 +75,13 @@ plot(unw_snow_mask)
 # table ryan sent over
 pit_info <-read.csv("/Users/jacktarricone/ch1_jemez_data/pit_data/perm_pits.csv")
 
-## define static information from pits
-# calculate density
-mean_density_feb12 <- pit_info$mean_density[1]
-mean_density_feb20 <- pit_info$mean_density[2]
-
-# mean density between two flights
-mean_density_feb12_20 <-(mean_density_feb12 + mean_density_feb20)/2
+# ## define static information from pits
+# # calculate density
+# mean_density_feb12 <- pit_info$mean_density[1]
+# mean_density_feb20 <- pit_info$mean_density[2]
+# 
+# # mean density between two flights
+# mean_density_feb12_20 <-(mean_density_feb12 + mean_density_feb20)/2
 
 # dielctric constant k
 k_feb12 <- pit_info$mean_k[1]
@@ -128,7 +128,7 @@ hist(dswe_raw, breaks = 100)
 
 # extent around gpr transect
 gpr <-ext(-106.5255, -106.521, 35.856, 35.8594)
-dswe_crop <-crop(delta_swe_raw, gpr)
+dswe_crop <-crop(dswe_raw, gpr)
 plot(dswe_crop)
 
 # pull out location info into separate df
@@ -142,26 +142,31 @@ points(pit_point, cex = 1)
 # extract cell number from pit lat/lon point
 pit_cell_v1 <-cells(dswe_raw, pit_point)
 cell_number <-pit_cell_v1[1,2]
+cell_number
 
 # define neighboring cells by number and create a vector
-neighbor_cells <-c(adjacent(unw, cells = cell_number, directions ="8"))
+neighbor_cells <-c(adjacent(dswe_raw, cells = cell_number, directions ="8"))
 
 # add orginal cell back to vector
 cell_vector <-c(cell_number, neighbor_cells)
 
 # extract using that vector
-nine_cell_phase <-as.matrix(terra::extract(unw, cell_vector,  cells = TRUE, xy = TRUE))
-nine_cell_phase
+nine_cell_dswe <-terra::extract(dswe_raw, cell_vector,  cells = TRUE, xy = TRUE)
+nine_cell_dswe
 
-# mean of 9 phases
-mean_pit_phase <-mean(nine_cell_phase[,1])
+# mean of 9 swe changes around
+mean_pit_dswe <-mean(nine_cell_dswe[1:9,1])
+mean_pit_dswe
 
-delta_swe_abs <-delta_swe_raw - mean_pit_phase
-plot(delta_swe_abs)
-hist(delta_swe_abs, breaks = 100)
+# subtract average swe change value to great absolute swe change
+# therefor pixels around the pit will show no swe change
+# which is consistent with what was observed on the ground
+dswe_abs <-dswe_raw - mean_pit_dswe
+plot(dswe_abs)
+hist(dswe_abs, breaks = 100)
 
 # save
-# writeRaster(delta_swe_abs,"delta_swe_feb12-19_v1.tif")
+# writeRaster(delta_swe_abs,"./final_swe_change/dswe_feb12-19.tif")
 
 # create cumlative swe change raster, teathering numbers up for debate!!
 
