@@ -3,8 +3,9 @@ library(terra)
 # RBG HLS imagery over the jemez for march 5th
 
 # list list rgb bands from both days
-setwd("/Users/jacktarricone/ch1_jemez_data/landsat_fsca/mar_05")
-list <-list.files(pattern = "3825", full.names = TRUE) # list all files
+setwd("/Users/jacktarricone/ch1_jemez_data/landsat_fsca/feb_18_tc/")
+list <-list.files(pattern = "SR", full.names = TRUE) # list all files
+print(list)
 
 # full 12 band winter
 hls_raw <-rast(list) # create "SpatRaster" for winter image

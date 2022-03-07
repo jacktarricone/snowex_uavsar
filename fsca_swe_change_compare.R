@@ -18,7 +18,7 @@ d_fsca_raw <-fsca_0305 - fsca_0218
 plot(d_fsca_raw)
 
 # read in cum swe
-d_swe <-rast("delta_swe_cum.tif")
+d_swe <-rast("dswe_cum30m.tif")
 plot(d_swe)
 
 # crop to d_swe
@@ -35,23 +35,34 @@ plot(d_fsca)
 
 # mask out fsca values that stayed constant
 # no change, therefore not good for comparison
-
 fsca_no0 <-d_fsca # make copy
-values(fsca_no0)[values(fsca_no0) == 0] <- NA 
+values(fsca_no0)[values(fsca_no0) == 0] <- NA
 plot(fsca_no0)
+# plot(fsca_no0)
 
 # mask swe change raster to new fsca one
-mask_d_swe <-mask(d_swe, fsca_no0, maskvalue = NA)
-plot(mask_d_swe)
+d_swe_thres <-d_swe
+values(d_swe_thres)[values(d_swe_thres) > -3] <- NA
+plot(d_swe_thres)
+
+## mask both to get same number of pixels for df
+fsca_no0_v1 <-mask(fsca_no0, d_swe_thres, maskvalue = NA)
+d_swe_thres_v1 <-mask(d_swe_thres, fsca_no0, maskvalue = NA)
+plot(fsca_no0_v1)
+plot(d_swe_thres)
+# writeRaster(mask_d_swe,"fsca_mask_d_swe.tif")
 
 # read in jemez extent
 jemez_wkt <-read_sf("/Users/jacktarricone/ch1_jemez_data/vector_data/jemez_ext.geojson")
 
 # crop fsca and swe down
-mask_d_swe_crop <-crop(mask_d_swe, jemez_wkt)
-fsca_no0_crop <-crop(fsca_no0, jemez_wkt)
-plot(mask_d_swe_crop)
-plot(fsca_no0_crop)
+mask_d_swe_crop <-crop(d_swe_thres_v1, jemez_wkt)
+fsca_no0_crop <-crop(fsca_no0_v1, jemez_wkt)
+
+
+my.palette1 <- RColorBrewer::brewer.pal(n = 11, name = "RdBu")
+plot(mask_d_swe_crop , col = my.palette1)
+plot(fsca_no0_crop, col = my.palette1)
 
 # convert rasters to dataframe
 swe_df <-as.data.frame(mask_d_swe_crop, xy = TRUE, cells = TRUE, na.rm = TRUE)
@@ -72,9 +83,12 @@ hist(df$d_fsca_percent, breaks = 100)
 
 ## scatter
 ggplot(df, aes(x = d_fsca_percent, y = d_swe_cm)) +
-  geom_point(alpha = .1) +
-  #scale_fill_gradient(low = "white", high = "darkred")+
-  #geom_hex(bins = 100) +
+  # xlim(c(-100,-70)) + ylim(c(-3,0))+
+  scale_fill_gradient(low = "white", high = "darkred")+
+  geom_hex(bins = 50) +
   labs(title = "fSCA vs delta SWE",
        x = Delta~"fSCA [%]",
        y = Delta~"SWE [cm]")
+
+
+

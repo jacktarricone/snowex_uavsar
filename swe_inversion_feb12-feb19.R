@@ -12,6 +12,7 @@
 
 library(terra)
 library(ggplot2)
+library(sf)
 
 # set home folder
 setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
@@ -124,7 +125,34 @@ writeRaster(delta_swe_raw,"raw_delta_swe_feb12_19.tif")
 # using swe change from the pit as "known" change point
 # this meathod is up for debate....
 
-# FROM QGIS
+# extent around gpr transect
+gpr <-ext(-106.5255, -106.521, 35.856, 35.8594)
+unw_gpr <-crop(unw, gpr)
+plot(unw_gpr)
+
+# pull out location info into separate df
+loc <-data.frame(lat = pit_info$lat[1],
+                 lon = pit_info$lon[1])
+
+# create sf object
+pit_point <-vect(loc, geom = c("lon","lat"), crs = crs(unw))
+points(pit_point, cex = 1)
+
+# extract one cell test
+unw_pit <-terra::extract(unw, pit_point,  cells = TRUE, xy = TRUE)
+unw_pit
+
+# extract phase values of 8 neighboring cells
+neighbor_cells <-c(adjacent(unw, cells = 6174974, directions ="queen"))
+test <-unw_pit <-terra::extract(unw, neighbor_cells,  cells = TRUE, xy = TRUE)
+head(test)
+
+
+
+
+
+?adjacent
+
 pit_phase_value <- 0.0541057 ### GET REAL PIT LOCATION FROM RYAN
 delta_swe_abs <-delta_swe_raw - pit_phase_value
 plot(delta_swe_abs)

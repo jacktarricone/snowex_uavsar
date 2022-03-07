@@ -23,6 +23,10 @@ discharge$Date <-as.Date(raw_discharge$Date)
 colnames(discharge)[3:5] <-c("date","discharge_cfs","quality_flag")
 head(discharge)
 
+write.csv(discharge, "/Users/jacktarricone/ch1_jemez_data/usgs_flow_data/jemez_usgs_daily_discharge.csv",
+          row.names = F)
+
+
 # full ts plot
 ggplot(discharge, aes(x = date, y = discharge_cfs))+
   geom_line()
