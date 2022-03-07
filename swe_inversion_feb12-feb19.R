@@ -9,6 +9,7 @@
 # feb23, 2021
 
 # update march 7th using pit location!
+# systematically extract values from 8 points around cell pit
 
 library(terra)
 library(ggplot2)
@@ -138,23 +139,24 @@ loc <-data.frame(lat = pit_info$lat[1],
 pit_point <-vect(loc, geom = c("lon","lat"), crs = crs(unw))
 points(pit_point, cex = 1)
 
-# extract one cell test
-unw_pit <-terra::extract(unw, pit_point,  cells = TRUE, xy = TRUE)
-unw_pit
+# extract cell number from pit lat/lon point
+pit_cell_v1 <-cells(unw, pit_point)
+cell_number <-pit_cell_v1[1,2]
 
-# extract phase values of 8 neighboring cells
-neighbor_cells <-c(adjacent(unw, cells = 6174974, directions ="queen"))
-test <-unw_pit <-terra::extract(unw, neighbor_cells,  cells = TRUE, xy = TRUE)
-head(test)
+# define neighboring cells by number and create a vector
+neighbor_cells <-c(adjacent(unw, cells = cell_number, directions ="8"))
 
+# add orginal cell back to vector
+cell_vector <-c(neighbor_cells, cell_number)
 
+# extract using that vector
+nine_cell_phase <-as.matrix(terra::extract(unw, cell_vector,  cells = TRUE, xy = TRUE))
+nine_cell_phase
 
+# mean of 9 phases
+mean_pit_phase <-mean(nine_cell_phase[,1])
 
-
-?adjacent
-
-pit_phase_value <- 0.0541057 ### GET REAL PIT LOCATION FROM RYAN
-delta_swe_abs <-delta_swe_raw - pit_phase_value
+delta_swe_abs <-delta_swe_raw - mean_pit_phase
 plot(delta_swe_abs)
 hist(delta_swe_abs, breaks = 100)
 
