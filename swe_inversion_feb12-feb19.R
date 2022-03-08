@@ -168,14 +168,4 @@ hist(dswe_abs, breaks = 100)
 # save
 writeRaster(dswe_abs,"./final_swe_change/dswe_feb12-19.tif")
 
-# create cumlative swe change raster, teathering numbers up for debate!!
-
-# read in rasters we just made
-delta_swe_feb19_26 <-rast("delta_swe_feb19-26_v2.tif")
-delta_swe_feb12_19 <-rast("delta_swe_feb12-19_v1.tif")
-
-# substract
-delta_swe_cum <-delta_swe_feb12_19 + delta_swe_feb19_26
-plot(delta_swe_cum)
-writeRaster(delta_swe_cum,"delta_swe_cum.tif")
 
