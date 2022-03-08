@@ -6,32 +6,35 @@
 ## NEED TO UPDATE WITH PROPER SWE RASTERS
 ## AVERAGE ALL PIXELS AROUND SNOWPIT TO GENERATE NO CHANGE POINT!!
 
+# update march 8th
+
 library(terra)
 library(ggplot2); theme_set(theme_classic(12)) # set theme
 library(dplyr)
 
+setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
+list.files("./final_swe_change/")
+
 # bring in gpr
-gpr_swe_feb12_20 <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/ryan_gpr_swe/feb20_minus_feb121.tif")
+gpr_swe_feb12_20_v1 <-rast("./ryan_gpr_swe/feb20_minus_feb121.tif")
+gpr_swe_feb12_20 <-project(gpr_swe_feb12_20_v1, "EPSG:4326") # change from NAD83
 plot(gpr_swe_feb12_20)
 gpr_swe_feb12_20
 
 # bring in unwrapped phase
-i_swe_feb12_19 <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/delta_swe_feb12-19_v1.tif")
+i_swe_feb12_19 <-rast("./final_swe_change/dswe_feb12-19.tif")
 plot(i_swe_feb12_19)
 
-# resample gpr to same grid as unw
-gprv1 <-resample(gpr_swe_feb12_20, i_swe_feb12_19, method = "bilinear")
-gprv1
-
-# crop both down to just gpr extent
-gpr <-crop(gprv1, ext(gpr_swe_feb12_20))
+# crop i_swe to gpr extent
 i_swe_crop <-crop(i_swe_feb12_19, ext(gpr_swe_feb12_20))
+
+# crop plot
 plot(i_swe_crop)
-plot(gpr, add = TRUE, col = "red")
+plot(gpr_swe_feb12_20, add = TRUE, col = "red")
 
 # mask both layers so they have the same number of pixels
-i_swe_mask <-mask(i_swe_crop, gpr, maskvalues = NA)
-gpr_mask <-mask(gpr, i_swe_mask, maskvalues = NA)
+i_swe_mask <-mask(i_swe_crop, gpr_swe_feb12_20, maskvalues = NA)
+gpr_mask <-mask(gpr_swe_feb12_20, i_swe_mask, maskvalues = NA)
 
 # test plot 
 plot(i_swe_mask)
@@ -83,11 +86,12 @@ ggplot(plotting_df) +
 #######
 #######
 ## bring in added phase raster aka 2/12-2/26
-i_swe_cum <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/delta_swe_cum.tif")
+i_swe_cum <-rast("./final_swe_change/dswe_cum.tif")
 plot(i_swe_cum)
 
 # bring in 2/12-2/26 gpr data
-gpr_feb26_minus_feb12 <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/ryan_gpr_swe/feb26_minus_feb121.tif")
+gpr_feb26_minus_feb12_v1 <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/ryan_gpr_swe/feb26_minus_feb121.tif")
+gpr_feb26_minus_feb12 <-project(gpr_feb26_minus_feb12_v1, "EPSG:4326")
 plot(gpr_feb26_minus_feb12)
 
 # resample gpr to same grid as unw, crop ext
@@ -120,16 +124,33 @@ colnames(cm_plotting_df)[4] <- "d_swe_insar" # rename col 4
 colnames(cm_plotting_df)[5] <- "d_swe_gpr" # rename col 5
 head(cm_plotting_df)
 
-# test plot
-theme_set(theme_light(11)) # set theme
+# quick hists
+hist(cm_plotting_df$d_swe_gpr, breaks = 20)
+hist(cm_plotting_df$d_swe_insar, breaks = 20)
 
+####
+# plotting
+####
+
+# scattter
+#theme_set(theme_light(11)) # set theme
 ggplot(cm_plotting_df) +
-  #geom_abline(slope = 1) +
-  geom_point(aes(y = d_swe_insar, x = d_swe_gpr), color = "black", alpha = .4) +
-  xlim(-4,2) +  ylim(-3,2) +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  xlim(c(-4,2)) + ylim(c(-1.5,.5))+
+  geom_point(aes(y = d_swe_insar, x = d_swe_gpr), color = "black", alpha = .3) +
   labs(title = "Delta SWE GPR vs. InSAR 2/12 - 2/26",
-       x = Delta~" SWE InSAR [cm]",
-       y = Delta~"SWE GPR [cm]")
+       x = Delta~"SWE GPR [cm]",
+       y = Delta~"SWE InSAR [cm")
+
+# density scatter
+ggplot(cm_plotting_df, aes(y = d_swe_insar, x = d_swe_gpr)) +
+  #geom_abline(slope = 1) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", contour_var = "count")+
+  scale_fill_continuous(type = "viridis") +
+  labs(title = Delta~"fSCA (2/18-3/5) vs InSAR SWE (2/12-2/26)",
+       x = Delta~"SWE GPR [cm",
+       y = Delta~"SWE InSAR [cm]]")
 
 # save image, doesnt like back slahes in the name bc it's a file path... idk
 ggsave("/Users/jacktarricone/ch1_jemez_data/plots/swe_gpr_vs_insar_feb12_26.png",
@@ -137,6 +158,12 @@ ggsave("/Users/jacktarricone/ch1_jemez_data/plots/swe_gpr_vs_insar_feb12_26.png"
        height = 5,
        units = "in",
        dpi = 300)
+
+
+m1 <-lm(d_swe_gpr ~ d_swe_insar, cm_plotting_df)
+summary(m1)
+
+
 ####
 
 cm_lm <-lm(unw ~ gpr_twt_change_ns, cm_plotting_df)

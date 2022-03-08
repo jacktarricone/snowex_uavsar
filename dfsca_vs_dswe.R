@@ -139,7 +139,7 @@ hist(df$d_fsca_percent, breaks = 100)
 theme_set(theme_classic(11))
 ggplot(df, aes(x = d_fsca_percent, y = d_swe_cm)) +
   #xlim(c(-100,50)) + ylim(c(-3,.5))+
-  # scale_fill_gradient(low = "grey90", high = "darkred")+
+  # cale_fill_gradient(low = "grey90", high = "darkred")+
   #geom_hex(bins = 50)+
   #geom_density_2d_filled(aes(fill = ..level..), contour_var = "count") +
   stat_density_2d(aes(fill = ..level..), geom = "polygon", contour_var = "count")+
