@@ -19,4 +19,34 @@ pair_2 <-mask(dswe_feb19_26, pair_1, maskvalue = NA)
 # substract
 dswe_cum <-pair_1 + pair_2
 plot(dswe_cum)
-writeRaster(dswe_cum,"dswe_cum.tif")
+
+# writeRaster(dswe_cum,"dswe_cum.tif")
+
+
+# vectorize JPL DEM for plotting
+jpl <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/dem_feb12-19.tif")
+jpl_test <-jpl
+values(jpl_test)[values(jpl) > 0] <-1
+plot(jpl_test)
+
+# convert to vector data
+jpl_shp <-as.polygons(jpl, 
+                      dissolve = TRUE,
+                      multi = TRUE,
+                      na.rm = TRUE, 
+                      extent = FALSE, crs = crs(jpl_test))
+
+plot(jpl_shp)
+
+## aggregate polyongs up to just data extent
+jpl_shp_v1 <- aggregate(jpl_shp, dissolve = TRUE, fun = "mean",cores = 10)
+plot(jpl_shp_v1)
+
+writeVector(jpl_shp_v1, "/Users/jacktarricone/ch1_jemez_data/vector_data/jpl_dem_extent.shp")
+
+plot(va, "NAME_1", lwd=5, plg=list(x="topright"), mar=rep(2,4))
+lines(v, lwd=3, col="light gray")
+lines(va)
+
+
+plot(jpl_shp, add = TRUE)
