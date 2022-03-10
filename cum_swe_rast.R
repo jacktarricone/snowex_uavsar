@@ -42,11 +42,16 @@ plot(jpl_shp)
 jpl_shp_v1 <- aggregate(jpl_shp, dissolve = TRUE, fun = "mean",cores = 10)
 plot(jpl_shp_v1)
 
-writeVector(jpl_shp_v1, "/Users/jacktarricone/ch1_jemez_data/vector_data/jpl_dem_extent.shp")
-
-plot(va, "NAME_1", lwd=5, plg=list(x="topright"), mar=rep(2,4))
-lines(v, lwd=3, col="light gray")
-lines(va)
+# writeVector(jpl_shp_v1, "/Users/jacktarricone/ch1_jemez_data/vector_data/jpl_dem_extent.shp")
 
 
-plot(jpl_shp, add = TRUE)
+states <-vect("/Users/jacktarricone/ch1_jemez_data/vector_data/states/cb_2018_us_state_20m.shp")
+states_reproj <-project(states, "EPSG:2163")
+# writeVector(states_reproj, "/Users/jacktarricone/ch1_jemez_data/vector_data/states_reproj.shp")
+
+
+plot(states_reproj)
+plot(states)
+
+test <-crop(states_reproj, ext(jpl_shp_v1))
+plot(test)
