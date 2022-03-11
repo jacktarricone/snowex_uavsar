@@ -23,7 +23,11 @@ plot(dswe_cum)
 # writeRaster(dswe_cum,"dswe_cum.tif")
 
 
-# vectorize JPL DEM for plotting
+
+############
+# vectorize JPL DEM for A map making
+#############
+
 jpl <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/dem_feb12-19.tif")
 jpl_test <-jpl
 values(jpl_test)[values(jpl) > 0] <-1
@@ -36,7 +40,7 @@ jpl_shp <-as.polygons(jpl,
                       na.rm = TRUE, 
                       extent = FALSE, crs = crs(jpl_test))
 
-plot(jpl_shp)
+plot(jpl_shp) # test plot
 
 ## aggregate polyongs up to just data extent
 jpl_shp_v1 <- aggregate(jpl_shp, dissolve = TRUE, fun = "mean",cores = 10)
@@ -44,14 +48,3 @@ plot(jpl_shp_v1)
 
 # writeVector(jpl_shp_v1, "/Users/jacktarricone/ch1_jemez_data/vector_data/jpl_dem_extent.shp")
 
-
-states <-vect("/Users/jacktarricone/ch1_jemez_data/vector_data/states/cb_2018_us_state_20m.shp")
-states_reproj <-project(states, "EPSG:2163")
-# writeVector(states_reproj, "/Users/jacktarricone/ch1_jemez_data/vector_data/states_reproj.shp")
-
-
-plot(states_reproj)
-plot(states)
-
-test <-crop(states_reproj, ext(jpl_shp_v1))
-plot(test)
