@@ -44,7 +44,7 @@ total_daily_solar <-function(day_of_study){
 tmz <- -7 # time zone
 year <- 2020
 month <- 2
-day <- 12
+day <- day_of_study
 timeh <- 0
 jd <- JDymd(year,month,day,hour=timeh)
 
@@ -123,6 +123,8 @@ days_list <-as.list(seq(12,26,1))
 # apply function to list of days
 solar_list <-lapply(days_list, total_daily_solar)
 
+
+###########################
 # test plot, changes daily!
 plot(solar_list[[15]])
 plot(solar_list[[1]])
@@ -136,7 +138,7 @@ avg_solar_kwh_feb12_26 <-app(solar_stack, mean)
 plot(avg_solar_kwh_feb12_26)
 
 # save
-writeRaster(avg_solar_kwh_feb12_26, "/Users/jacktarricone/ch1_jemez_data/jemez_lidar/avg_solar_kwh_feb12_26.tif")
+writeRaster(avg_solar_kwh_feb12_26, "/Users/jacktarricone/ch1_jemez_data/jemez_lidar/avg_solar_kwh_feb12_26_v2.tif")
 
 
 
