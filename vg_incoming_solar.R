@@ -137,6 +137,8 @@ solar_stack # inspect
 avg_solar_kwh_feb12_26 <-app(solar_stack, mean)
 plot(avg_solar_kwh_feb12_26)
 
+global(avg_solar_kwh_feb12_26, mean)
+
 # save
 writeRaster(avg_solar_kwh_feb12_26, "/Users/jacktarricone/ch1_jemez_data/jemez_lidar/avg_solar_kwh_feb12_26_v2.tif")
 
