@@ -29,4 +29,6 @@ gar_insar <-filter(garita, date >= "2020-02-10" & date < "2020-04-01")
 ggplot()+
   geom_line(gar_insar, mapping = aes(x = date, y = snow_water_equivalent))+
   geom_line(que_insar, mapping = aes(x = date, y = snow_water_equivalent), color = "red")
+
+
   
