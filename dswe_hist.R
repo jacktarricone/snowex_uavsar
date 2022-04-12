@@ -30,9 +30,15 @@ ggplot()+
   xlim(c(-2,1))
 
 ggplot()+
-  geom_density(p2_df, mapping = aes(x=lyr.1), alpha=0.4, color = "green", bins = 100) +
-  geom_density(p1_df, mapping = aes(x=lyr.1), alpha=0.4,  color = "red", bins = 100) +
-  geom_density(cum_df, mapping = aes(x=lyr.1), alpha=0.4,  color = "black", bins = 100) +
+  geom_density(p2_df, mapping = aes(x=lyr.1, fill = "Feb 12-19th", color = "Feb 12-19th"), alpha=0.4) +
+  geom_density(p1_df, mapping = aes(x=lyr.1, fill = "Feb 19-26th", color = "Feb 19-26th"), alpha=0.4) +
+  geom_density(cum_df, mapping = aes(x=lyr.1, fill = "Feb 12-26th", color = "Feb 12-26th"), alpha=0.4) +
+  scale_colour_manual(name = "Date Range",
+                      labels = c("Feb 12-19th","Feb 19-26th","Feb 12-26th"),
+                      values=c("firebrick","goldenrod","black"))+
+  scale_fill_manual(name = "Date Range",
+                    labels = c("Feb 12-19th","Feb 19-26th","Feb 12-26th"),
+                    values = c("firebrick","goldenrod","black"))+
   xlim(c(-2,1)) + xlab("dSWE [cm]")
 
 
