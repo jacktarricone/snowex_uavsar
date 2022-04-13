@@ -9,6 +9,7 @@
 # then add? not sur yet, to make surface normal vector
 
 library(terra)
+library(raster)
 library(insol) # https://rdrr.io/cran/insol/man/cgrad.html
 
 

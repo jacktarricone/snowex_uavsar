@@ -33,6 +33,8 @@ values(vv)[values(vv) == 0] <-NA
 plot(vv)
 vv_full_mean <-global(vv, mean, na.rm = TRUE)
 
+## bring in vallee grand wkt
+vg <-vect("/Users/jacktarricone/ch1_jemez_data/vector_data/valle_grande_aoi.geojson")
 
 # hh
 hh_vg_v1 <-mask(hh, vg)

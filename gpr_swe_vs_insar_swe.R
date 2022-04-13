@@ -16,8 +16,9 @@ setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
 list.files("./final_swe_change/")
 
 # bring in gpr
-gpr_swe_feb12_20_v1 <-rast("./ryan_gpr_swe/feb20_minus_feb121.tif")
-gpr_swe_feb12_20 <-project(gpr_swe_feb12_20_v1, "EPSG:4326") # change from NAD83
+gpr_swe_feb12_20_v1 <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_swe_and_dswe/Feb20_minus_Feb12_v2_SWE1.tif")
+gpr_swe_feb12_20_cm <-gpr_swe_feb12_20_v1/10
+gpr_swe_feb12_20 <-project(gpr_swe_feb12_20_cm, "EPSG:4326") # change from NAD83
 plot(gpr_swe_feb12_20)
 gpr_swe_feb12_20
 
@@ -90,8 +91,9 @@ i_swe_cum <-rast("./final_swe_change/dswe_cum.tif")
 plot(i_swe_cum)
 
 # bring in 2/12-2/26 gpr data
-gpr_feb26_minus_feb12_v1 <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/ryan_gpr_swe/feb26_minus_feb121.tif")
-gpr_feb26_minus_feb12 <-project(gpr_feb26_minus_feb12_v1, "EPSG:4326")
+gpr_feb26_minus_feb12_v1 <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_swe_and_dswe/Feb26_minus_Feb12_v2_SWE1.tif")
+gpr_feb26_minus_feb12_cm <-gpr_feb26_minus_feb12_v1/10 # convert to cm from mm
+gpr_feb26_minus_feb12 <-project(gpr_feb26_minus_feb12_cm, "EPSG:4326")
 plot(gpr_feb26_minus_feb12)
 
 # resample gpr to same grid as unw, crop ext
@@ -118,7 +120,7 @@ head(gpr_df)
 head(swe_df)
 
 # bind the data frames
-cm_plotting_df <-cbind(swe_df, gpr_df$feb26_minus_feb121)
+cm_plotting_df <-cbind(swe_df, gpr_df$Feb26_minus_Feb12_v2_SWE1)
 head(cm_plotting_df)
 colnames(cm_plotting_df)[4] <- "d_swe_insar" # rename col 4
 colnames(cm_plotting_df)[5] <- "d_swe_gpr" # rename col 5
@@ -137,15 +139,23 @@ hist(cm_plotting_df$d_swe_insar, breaks = 20)
 ggplot(cm_plotting_df) +
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0) +
-  xlim(c(-4,2)) + ylim(c(-1.5,.5))+
+  ylim(c(-1,1)) + scale_x_continuous(breaks = seq(-9,9,3))+
   geom_point(aes(y = d_swe_insar, x = d_swe_gpr), color = "black", alpha = .3) +
-  labs(title = "Delta SWE GPR vs. InSAR 2/12 - 2/26",
+  labs(title = Delta~"SWE GPR vs. InSAR 2/12 - 2/26",
        x = Delta~"SWE GPR [cm]",
-       y = Delta~"SWE InSAR [cm")
+       y = Delta~"SWE InSAR [cm]")
+min(gpr_df$Feb26_minus_Feb12_v2_SWE1)
+
+ggsave("/Users/jacktarricone/ch1_jemez_data/plots/dswe_gpr_vs_insar_feb26_12.png",
+       width = 5, 
+       height = 5,
+       units = "in",
+       dpi = 300)
 
 # density scatter
 ggplot(cm_plotting_df, aes(y = d_swe_insar, x = d_swe_gpr)) +
   #geom_abline(slope = 1) +
+  xlim(c(-2,2)) + ylim(c(-2,2))+
   stat_density_2d(aes(fill = ..level..), geom = "polygon", contour_var = "count")+
   scale_fill_continuous(type = "viridis") +
   labs(title = Delta~"fSCA (2/18-3/5) vs InSAR SWE (2/12-2/26)",
