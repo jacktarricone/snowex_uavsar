@@ -32,7 +32,7 @@ ggplot(pair_1) +
 setwd("/Users/jacktarricone/ch1_jemez_data/plots")
 ggsave("hq_met_temp.png",
        width = 8, 
-       height = 5,
+       height = 3,
        units = "in",
        dpi = 300)
 
