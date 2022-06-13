@@ -44,7 +44,7 @@ format_csv <-function(file_path){
     
     #add depth cm
     csv$snow_depth_mm <-as.numeric(csv$snow_depth_mm)
-    csv$snow_depth_cm <-csv$snow_depth_mm*(1/10)
+    csv$redondo_snow_depth_cm <-csv$snow_depth_mm*(1/10)
 
     # format hours col
     hours <-as.character(seq(1,24,1))
@@ -56,7 +56,7 @@ format_csv <-function(file_path){
     
     # save
     setwd("/Users/jacktarricone/ch1_jemez_data/climate_station_data/redondo/formatted/")
-    write.csv(csv, paste0(name_raw), row.names = FALSE)
+    write.csv(csv, paste0(file_name,".csv"), row.names = FALSE)
 }
 
 # applot to list of csvs
@@ -68,14 +68,13 @@ redondo_met_data <-list.files(path="/Users/jacktarricone/ch1_jemez_data/climate_
   lapply(read.csv) %>% 
   bind_rows
 
-# clear unwatned cols
-redondo_met_data <-redondo_met_data[ -c(16:20) ]
-
 # convert date_time and date
 redondo_met_data$date_time <-ymd_hms(redondo_met_data$date_time)
 redondo_met_data$date <-as.Date(redondo_met_data$date)
 
+head(redondo_met_data)
+
 # save rough csv
-write.csv(redondo_met_data, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/redondo/redondo_met_data_v1.csv", row.names = FALSE)
+write.csv(redondo_met_data, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/redondo/redondo_met_data_v1.csv", row.names =  FALSE)
 
 
