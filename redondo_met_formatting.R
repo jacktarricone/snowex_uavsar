@@ -64,18 +64,18 @@ lapply(list, format_csv)
 
 
 # bind rows for one big df
-vg_met_data <-list.files(path="/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/formatted/", full.names = TRUE) %>% 
+redondo_met_data <-list.files(path="/Users/jacktarricone/ch1_jemez_data/climate_station_data/redondo/formatted/", full.names = TRUE) %>% 
   lapply(read.csv) %>% 
   bind_rows
 
 # clear unwatned cols
-vg_met_data <-vg_met_data[ -c(16:20) ]
+redondo_met_data <-redondo_met_data[ -c(16:20) ]
 
 # convert date_time and date
-vg_met_data$date_time <-ymd_hms(vg_met_data$date_time)
-vg_met_data$date <-as.Date(vg_met_data$date)
+redondo_met_data$date_time <-ymd_hms(redondo_met_data$date_time)
+redondo_met_data$date <-as.Date(redondo_met_data$date)
 
 # save rough csv
-write.csv(vg_met_data, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/vg_met_data_v2.csv")
+write.csv(redondo_met_data, "/Users/jacktarricone/ch1_jemez_data/climate_station_data/redondo/redondo_met_data_v1.csv", row.names = FALSE)
 
 
