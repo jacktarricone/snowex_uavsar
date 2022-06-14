@@ -5,8 +5,8 @@ print(list)
 
 
 for (i in list) {
-  id <- basename(i)
-  id_2 <- gsub("_2022", "_2020", id)
-  fname <- paste0(dirname(i), "/", id_2, ".csv")
+  file <- basename(i)
+  cleaned <- gsub("*.cs_v", ".csv", file)
+  fname <- paste0(dirname(i), "/", cleaned)
   file.rename(i, fname)
 }
