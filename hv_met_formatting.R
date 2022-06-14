@@ -56,7 +56,7 @@ format_csv <-function(file_path){
     
     #add depth cm
     csv$snow_depth_mm <-as.numeric(csv$snow_depth_mm)
-    csv$hv_snow_depth_cm <-csv$snow_depth_mm*(1/10)# need to check this
+    csv$hv_snow_depth_cm <-csv$snow_depth_mm*(10) # other cites have depth in hundreds of mm....
 
     # format hours col
     hours <-as.character(seq(1,24,1))

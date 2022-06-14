@@ -1,3 +1,8 @@
+# plotting all the snow depth sensors in the jemez study area
+# june 14th
+# 5 of noah's on reondo
+# 3 WRCC: valle grande, hidden valley, reondo
+
 library(dplyr)
 library(readxl)
 library(lubridate)
@@ -20,7 +25,7 @@ ggplot(dat)+
 # filter and plot for 2/12-2/26
 filt <-filter(dat, TIMESTAMP >= "2020-02-10 18:50:00" & TIMESTAMP <= "2020-02-26 18:50:00")
 
-# read in HQ met data
+######## read in HQ met data
 vg_met_data <-read.csv("/Users/jacktarricone/ch1_jemez_data/climate_station_data/vg/vg_met_data_v2.csv")
 vg_met_data$vg_snow_depth_cm <-as.numeric(vg_met_data$vg_snow_depth_cm)
 vg_met_data$date_time <-mdy_hm(vg_met_data$date_time)
@@ -29,7 +34,7 @@ vg_met_data$date <-mdy(vg_met_data$date)
 # filter down to same date range
 vg_filt <-filter(vg_met_data, date_time >= "2020-02-10 18:50:00" & date_time <= "2020-02-26 18:50:00")
 
-# read in redondo met data
+######### read in redondo met data
 redondo_met_data <-read.csv("/Users/jacktarricone/ch1_jemez_data/climate_station_data/redondo/redondo_met_data_v1.csv")
 redondo_met_data$date_time <-ymd_hms(redondo_met_data$date_time)
 redondo_met_data$date <-ymd(redondo_met_data$date)
@@ -37,17 +42,30 @@ redondo_met_data$date <-ymd(redondo_met_data$date)
 # filter down to same date range
 redondo_filt <-filter(redondo_met_data, date_time >= "2020-02-10 18:50:00" & date_time <= "2020-02-26 18:50:00")
 
+######### read in hv met data
+hv_met_data <-read.csv("/Users/jacktarricone/ch1_jemez_data/climate_station_data/hv/hv_met_data_v1.csv")
+hv_met_data$date_time <-ymd_hms(hv_met_data$date_time)
+hv_met_data$date <-ymd(hv_met_data$date)
+
+# filter down to same date range
+hv_filt <-filter(hv_met_data, date_time >= "2020-02-10 18:50:00" & date_time <= "2020-02-26 18:50:00")
+head(hv_filt)
+
 # bind snow depth and date_time cols to df
-insar <-cbind(filt, vg_filt$date_time, vg_filt$vg_snow_depth_cm, redondo_filt$redondo_snow_depth_cm)
+insar <-cbind(filt, vg_filt$date_time, 
+              vg_filt$vg_snow_depth_cm, 
+              redondo_filt$redondo_snow_depth_cm, 
+              hv_filt$hv_snow_depth_cm)
 
 # rename new cols
 names(insar)[7] <- "date_time"
 names(insar)[8] <- "vg_snow_depth_cm"
 names(insar)[9] <- "redondo_snow_depth_cm"
+names(insar)[10] <- "hv_snow_depth_cm"
 
 # test_plot
 ggplot(insar) +
-  geom_point(aes(x = date_time, y = redondo_snow_depth_cm))
+  geom_point(aes(x = date_time, y = hv_snow_depth_cm))
 
 # plot
 ggplot(insar)+
@@ -58,12 +76,13 @@ ggplot(insar)+
   geom_point(aes(x = TIMESTAMP, y = DSDepth_8, col = "5"), size = .1)+
   geom_point(aes(x = TIMESTAMP, y = vg_snow_depth_cm, col = "6"), size = .1)+
   geom_point(aes(x = TIMESTAMP, y = redondo_snow_depth_cm, col = "7"), size = .1)+
+  geom_point(aes(x = TIMESTAMP, y = hv_snow_depth_cm, col = "8"), size = .1)+
   scale_y_continuous(limits = c(50,110),breaks = c(seq(50,110,10)))+
   ylab("Depth (cm)") + xlab("Date") +
   scale_color_manual(values = c('1' = 'darkgreen', '2' = 'red', '3' = 'plum', '4' = 'goldenrod', 
-                                '5'='blue', '6'='firebrick', '7'='aquamarine'),
+                                '5'='blue', '6'='firebrick', '7'='aquamarine','8'='darkorange'),
                      labels = c('1' = 'DSDepth_1', '2' = 'DSDepth_2', '3' = 'DSDepth_1', 
-                                '4' = 'DSDepth_6', '5' = 'DSDepth_8', '6' ='VG', '7'='Redondo'),
+                                '4' = 'DSDepth_6', '5' = 'DSDepth_8', '6' ='VG', '7'='Redondo', '8'='HV'),
                      name = "Sensor")+
   scale_x_datetime(breaks = "2 day", 
                    date_labels="%b %d", 
@@ -71,7 +90,7 @@ ggplot(insar)+
 
 
 setwd("/Users/jacktarricone/ch1_jemez_data/plots")
-ggsave(file = "noah_jemez_depth_v2.png",
+ggsave(file = "noah_jemez_depth_v3.png",
        width = 7,
        height = 4,
        dpi = 400)
