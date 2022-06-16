@@ -5,7 +5,7 @@
 
 
 library(terra)
-library(ggplot2); theme_set(theme_classic(12)) # set theme
+library(ggplot2)
 library(dplyr)
 
 setwd("/Users/jacktarricone/ch1_jemez_data/")
@@ -18,9 +18,12 @@ plot(i_swe_cum)
 
 # bring in 2/12-2/26 gpr data
 gpr_feb26_minus_feb12_v1 <-rast("./gpr_swe_bias/feb26_minus_Feb12_bias_corrected1.tif")
-plot(gpr_feb26_minus_feb12_v1)
 gpr_feb26_minus_feb12 <-gpr_feb26_minus_feb12_v1/10 # convert to cm from mm
 plot(gpr_feb26_minus_feb12)
+hist(gpr_feb26_minus_feb12, breaks = 50)
+
+global(gpr_feb26_minus_feb12,mean,na.rm=T)
+
 
 # resample gpr to same grid as unw, crop ext
 i_swe_cum_crop <-crop(i_swe_cum, ext(gpr_feb26_minus_feb12)) # crop
@@ -62,16 +65,35 @@ hist(cm_plotting_df$dswe_insar, breaks = 10)
 
 # scattter
 #theme_set(theme_light(11)) # set theme
+theme_set(theme_bw(14)) # set theme
 ggplot(cm_plotting_df) +
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0) +
   ylim(c(-10,10)) + xlim(c(-10,10))+
-  geom_point(aes(y = dswe_insar, x = dswe_gpr), color = "black", alpha = .3) +
-  labs(title = Delta~"SWE GPR vs. InSAR 2/12 - 2/26",
+  geom_point(aes(y = dswe_insar, x = dswe_gpr), color = "darkred", alpha = .3) +
+  labs(#title = Delta~"SWE GPR vs. InSAR 2/12 - 2/26",
        x = Delta~"SWE GPR [cm]",
-       y = Delta~"SWE InSAR [cm]")
+       y = Delta~"SWE InSAR [cm]")+
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(colour = "black", size=1))
 
-ggsave("/Users/jacktarricone/ch1_jemez_data/plots/dswe_gpr_vs_insar_feb26_12_bias.png",
+# lm_df <-cm_plotting_df[-c(1:3)]
+# names(lm_df)[1:2] <-c("x","y")
+# 
+# lm_eqn <- function(df){
+#   m <- lm(y ~ x, df);
+#   eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+#                    list(a = format(unname(coef(m)[1]), digits = 2),
+#                         b = format(unname(coef(m)[2]), digits = 2),
+#                         r2 = format(summary(m)$r.squared, digits = 3)))
+#   as.character(as.expression(eq));
+# }
+# 
+# p1 <- p + geom_text(x = -5, y = 9, label = lm_eqn(lm_df), parse = TRUE)
+# print(p1)
+
+ggsave("/Users/jacktarricone/ch1_jemez_data/plots/dswe_gpr_vs_insar_feb26_12_bias_v5.png",
        width = 5, 
        height = 5,
        units = "in",
@@ -83,9 +105,9 @@ ggplot(cm_plotting_df, aes(y = dswe_insar, x = dswe_gpr)) +
   xlim(c(-2,2)) + ylim(c(-2,2))+
   stat_density_2d(aes(fill = ..level..), geom = "polygon", contour_var = "count")+
   scale_fill_continuous(type = "viridis") +
-  labs(title = Delta~"SWE GPR vs. InSAR 2/12 - 2/26",
-       x = Delta~"SWE GPR [cm",
-       y = Delta~"SWE InSAR [cm]]")
+  labs(#title = Delta~"SWE GPR vs. InSAR 2/12 - 2/26",
+       x = Delta~"SWE GPR [cm]",
+       y = Delta~"SWE InSAR [cm]")
 
 # save image, doesnt like back slahes in the name bc it's a file path... idk
 ggsave("/Users/jacktarricone/ch1_jemez_data/plots/swe_gpr_vs_insar_feb12_26.png",
@@ -95,36 +117,4 @@ ggsave("/Users/jacktarricone/ch1_jemez_data/plots/swe_gpr_vs_insar_feb12_26.png"
        dpi = 300)
 
 
-m1 <-lm(d_swe_gpr ~ d_swe_insar, cm_plotting_df)
-summary(m1)
 
-
-####
-
-cm_lm <-lm(unw ~ gpr_twt_change_ns, cm_plotting_df)
-summary(cm_lm)
-
-ggplot(cm_plotting_df, aes(y = unw, x = gpr_twt_change_ns)) +
-  geom_point()+
-  geom_abline(slope = coef(cm_lm)[["gpr_twt_change_ns"]], 
-              intercept = coef(cm_lm)[["(Intercept)"]])
-
-#### testing putting things on same scale
-cm_test <-cm_plotting_df
-
-# check min
-cm_test$unw_norm <-cm_test$unw-min(cm_test$unw)
-cm_test$gpr_norm <-cm_test$gpr_twt_change_ns-min(cm_test$gpr_twt_change_ns)
-head(cm_test)
-
-ggplot(cm_test) +
-  geom_point(aes(y = unw_norm, x = gpr_norm))
-
-# add lm
-cm_lm_norm <-lm(unw_norm ~ gpr_norm, cm_test)
-summary(cm_lm_norm)
-
-ggplot(cm_test, aes(y = unw_norm, x = gpr_norm)) +
-  geom_point()+
-  geom_abline(slope = coef(cm_lm_norm)[["gpr_norm"]], 
-              intercept = coef(cm_lm_norm)[["(Intercept)"]])
