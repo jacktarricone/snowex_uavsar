@@ -1,7 +1,7 @@
 # SWE inversion for 2/19-2/26
 # jack tarricone
 
-# feb 23, 2021
+# using radians
 
 # update march 7th using pit location!
 # systematically extract values from 8 points around cell pit
@@ -18,7 +18,7 @@ unw_raw <-rast("unw_feb19-feb26.tif")
 plot(unw_raw)
 
 # import i_angle raster and resample to unw grid bc of slight extent difference
-lidar_inc_raw <-rast("lidar_inc_deg.tif")
+lidar_inc_raw <-rast("lidar_inc_rad.tif")
 lidar_inc_v1 <-resample(lidar_inc_raw, unw_raw)
 
 # set crop extent and crop for better visualization
