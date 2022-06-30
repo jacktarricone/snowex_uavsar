@@ -16,6 +16,19 @@ plv_km <-rast("plv_km.tif")
 plv_km
 plot(plv_km)
 
+# bring in coherence raster for masking
+cor <-rast("cor_feb19-26.tif")
+cor[cor == 0] <-NA
+
+# create masking raster with smallest possible extent
+cor_mask <-cor
+plv_km_crop <-resample(plv_km, cor_mask)
+cor_mask_v2 <-mask(cor_mask, plv_km_crop, maskvalue=NA)
+cor_mask_v2[cor_mask_v2==0] <- -NA
+cor_mask_v2[cor_mask_v2>0] <-999
+plot(cor_mask_v2)
+#writeRaster(cor_mask_v2, "cor_mask.tif")
+
 ##############
 ### bring in all the insar data 
 ##############
@@ -24,7 +37,26 @@ plot(plv_km)
 unw_raw <-rast("/Users/jacktarricone/Desktop/jemez_geoloc_rough/unw_gecoded_feb12-26_v3.tif")
 values(unw_raw)[(unw_raw)==0]<-NA
 unw_raw
-plot(unw_raw)
+plot(unw_raw, add = TRUE)
+
+# create ncol rast
+cols <-rev(seq(1,4713,1)) # ncols vector
+cols_mat <-matrix(cols, nrow=7795, ncol=length(cols), byrow=TRUE) # make matrix, byrow TRUE
+cols_rast <-rast(cols_mat)
+crs(cols_rast) <-crs(unw_raw)
+ext(cols_rast) <-ext(unw_raw)
+plot(cols_rast)
+#writeRaster(cols_rast, "ncol.tif")
+
+# create nrow rast
+rows <-rev(seq(1,7795,1)) # nrows vector
+rows_mat <-matrix(rows, nrow=length(rows), ncol=4713, byrow=FALSE) # make matrix
+rows_rast <-rast(rows_mat)
+crs(rows_rast) <-crs(unw_raw)
+ext(rows_rast) <-ext(unw_raw)
+plot(rows_rast)
+#writeRaster(rows_rast, "ncol.tif")
+
 
 #########################################
 ## resample and crop to one size ########
@@ -76,20 +108,26 @@ plot(plv_masked, add = TRUE)
 # we do this because we're assuming there is some snow signal combine with atm signal in no pixels
 # by doing just these, in theory we're just focusing on the atmospheric protion
 
-snow_mask <-rast("landsat_fsca_2-18.tif")
-plot(no_snow_mask, add = TRUE)
+#################### snow mask
+
+snow_mask_raw <-rast("landsat_fsca_2-18.tif")
+plot(snow_mask_raw)
 
 # clip edges off no snow mask to make it same size as plv and unw
-clipped_sm <-mask(snow_mask, unw_masked, maskvalue = NA)
-plot(clipped_nsm)
+snow_mask <-mask(snow_mask_raw, unw_masked, maskvalue = NA)
+plot(snow_mask)
 
-# no snow unw
-snow_unw <-mask(unw_masked, clipped_sm, maskvalue = NA)
+
+#### snow unw and plv
+
+# snow unw
+snow_unw <-mask(unw_masked, snow_mask, maskvalue = NA)
 plot(snow_unw)
 
-# no snow plv
-snow_plv <-mask(plv_resamp, clipped_sm, maskvalue = NA)
+# snow plv
+snow_plv <-mask(plv_resamp, snow_mask, maskvalue = NA)
 plot(snow_plv)
+
 
 ### convert no snow plv and unw rasters to dataframes, rename data columns
 # unw
@@ -99,16 +137,15 @@ head(unw_df)
 hist(unw_df$unwrapped_phase, breaks = 100) #quick hist to check
 
 #plv
-plv_df <-as.data.frame(no_snow_plv, xy=TRUE, cells=TRUE, na.rm=TRUE)
+plv_df <-as.data.frame(snow_plv, xy=TRUE, cells=TRUE, na.rm=TRUE)
 colnames(plv_df)[4] <- "plv_km"
 head(plv_df)
 hist(plv_df$plv_km, breaks = 100) #quick hist to check
 
 #bind last column on for future plot
-no_snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km)
-colnames(no_snow_unw_plv_df)[5] <- "plv_km"
-head(no_snow_unw_plv_df)
-
+snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km)
+colnames(snow_unw_plv_df)[5] <- "plv_km"
+head(snow_unw_plv_df)
 
 # save the data frame for making more plots in the future
 #fwrite(no_snow_unw_plv_df, "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_unw_plv_df.csv")
@@ -116,20 +153,22 @@ head(no_snow_unw_plv_df)
 # plot unw data vs longitude (this should be vs cell in reality need to update)
 
 theme_set(theme_light(base_size =12))
-p9 <-ggplot(no_snow_unw_plv_df, aes(x, unwrapped_phase)) +
+
+p9 <-ggplot(snow_unw_plv_df, aes(x, unwrapped_phase)) +
   geom_hex(bins = 25) +
   scale_fill_gradient(low = "white", high = "firebrick") +
   #stat_smooth_func2(geom="text",method="lm",hjust=0,parse=TRUE) +
   #geom_smooth(method = "lm", se = FALSE) +
   #geom_abline(slope = coef(lm_fit)[[2]], intercept = coef(lm_fit)[[1]], size = 1)+
   #scale_y_continuous(breaks = seq(-5,6,2))+
-  labs(title = "Jemez River No Snow Unwrapped Phase 2/12-2/19",
+  labs(title = "Jemez Snow Pixels Unwrapped Phase 2/12-2/26",
        x = "Longitude Change (deg)",
        y = "Unwrapped Phase (radians)")+
   theme(axis.line = element_line(colour = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank())
+
 print(p9)
 
 # save
@@ -138,6 +177,71 @@ print(p9)
 # width = 6, 
 # height = 4,
 # dpi = 400)
+
+################################ no snow
+# make no snow mask
+no_snow_mask <-snow_mask
+no_snow_mask[is.na(no_snow_mask)] <- -99
+no_snow_mask[no_snow_mask > 0] <-NA
+plot(no_snow_mask)
+
+#### no snow mask
+
+#### no snow mask
+
+# no snow unw
+no_snow_unw <-mask(unw_masked, no_snow_mask, maskvalue = NA)
+plot(no_snow_unw)
+
+# no snow plv
+no_snow_plv_v1 <-mask(plv_resamp, no_snow_mask, maskvalue = NA)
+plot(no_snow_plv_v1)
+no_snow_plv <-mask(no_snow_plv_v1, cor, NA)
+plot(no_snow_plv)
+
+### convert no snow plv and unw rasters to dataframes, rename data columns
+# unw
+unw_df <-as.data.frame(snow_unw, xy=TRUE, cells=TRUE, na.rm=TRUE)
+colnames(unw_df)[4] <- "unwrapped_phase"
+head(unw_df)
+hist(unw_df$unwrapped_phase, breaks = 100) #quick hist to check
+
+#plv
+plv_df <-as.data.frame(snow_plv, xy=TRUE, cells=TRUE, na.rm=TRUE)
+colnames(plv_df)[4] <- "plv_km"
+head(plv_df)
+hist(plv_df$plv_km, breaks = 100) #quick hist to check
+
+#bind last column on for future plot
+snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km)
+colnames(no_snow_unw_plv_df)[5] <- "plv_km"
+head(no_snow_unw_plv_df)
+
+# save the data frame for making more plots in the future
+#fwrite(no_snow_unw_plv_df, "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_unw_plv_df.csv")
+
+# plot unw data vs longitude (this should be vs cell in reality need to update)
+
+theme_set(theme_light(base_size =12))
+
+p9 <-ggplot(snow_unw_plv_df, aes(x, unwrapped_phase)) +
+  geom_hex(bins = 25) +
+  scale_fill_gradient(low = "white", high = "firebrick") +
+  #stat_smooth_func2(geom="text",method="lm",hjust=0,parse=TRUE) +
+  #geom_smooth(method = "lm", se = FALSE) +
+  #geom_abline(slope = coef(lm_fit)[[2]], intercept = coef(lm_fit)[[1]], size = 1)+
+  #scale_y_continuous(breaks = seq(-5,6,2))+
+  labs(title = "Jemez River No Snow Unwrapped Phase 2/12-2/26",
+       x = "Longitude Change (deg)",
+       y = "Unwrapped Phase (radians)")+
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank())
+
+print(p9)
+
+
 
 ########################3 plot path length vs longitude
 
