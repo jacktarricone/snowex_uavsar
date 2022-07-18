@@ -50,12 +50,12 @@ plot(cols_rast)
 
 # create nrow rast
 rows <-rev(seq(1,7795,1)) # nrows vector
-rows_mat <-matrix(rows, nrow=length(rows), ncol=4713, byrow=FALSE) # make matrix
+rows_mat <-matrix(rows, nrow=length(rows), ncol=4713, byrow=FALSE) # make matrix, by row FALSE
 rows_rast <-rast(rows_mat)
 crs(rows_rast) <-crs(unw_raw)
 ext(rows_rast) <-ext(unw_raw)
 plot(rows_rast)
-#writeRaster(rows_rast, "ncol.tif")
+#writeRaster(rows_rast, "nrow.tif")
 
 
 #########################################
@@ -80,24 +80,28 @@ plot(unw_non_na)
 
 # same thing for plv
 plv_resamp_non_na <-plv_resamp
-values(plv_resamp_non_na)[!is.na(plv_resamp_non_na[])] = 1
+#values(plv_resamp_non_na)[!is.na(plv_resamp_non_na[])] = 1
 plot(plv_resamp_non_na)
 
 # crop plv with unw, this leaves only the cells that exist in both data sets for plotting
-plv_crop1 <-terra::mask(plv_resamp_non_na, unw_non_na, maskvalues=NA)
-plv_unw_mask <-terra::mask(unw_non_na, plv_crop1, maskvalues=NA)
+#plv_crop1 <-terra::mask(plv_resamp_non_na, unw_non_na, maskvalues=NA)
+plv_unw_mask <-terra::mask(plv_resamp_non_na, unw_non_na, maskvalues=NA)
+plot(plv_unw_mask)
 
 # test plot, looks good
 plot(plv_resamp)
 plot(unw_raw, add = TRUE)
 plot(plv_unw_mask, add = TRUE)
 
-# mask both unw and plv with the mask
-unw_masked <-terra::mask(unw_raw, plv_unw_mask, maskvalues=NA)
-plot(unw_masked)
+unw_raw
+plv_unw_mask
 
-plv_masked <-terra::mask(plv_resamp, plv_unw_mask, maskvalues=NA)
-plot(plv_masked, add = TRUE)
+# mask both unw and plv with the mask
+# unw_masked <-terra::mask(unw_raw, plv_unw_mask, maskvalues=NA)
+# plot(unw_masked)
+# 
+# plv_masked <-terra::mask(plv_resamp, plv_unw_mask, maskvalues=NA)
+# plot(plv_masked, add = TRUE)
 
 
 ########################################
@@ -130,6 +134,7 @@ plot(snow_plv)
 
 
 ### convert no snow plv and unw rasters to dataframes, rename data columns
+
 # unw
 unw_df <-as.data.frame(snow_unw, xy=TRUE, cells=TRUE, na.rm=TRUE)
 colnames(unw_df)[4] <- "unwrapped_phase"
@@ -148,7 +153,7 @@ colnames(snow_unw_plv_df)[5] <- "plv_km"
 head(snow_unw_plv_df)
 
 # save the data frame for making more plots in the future
-#fwrite(no_snow_unw_plv_df, "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_unw_plv_df.csv")
+data.table::fwrite(snow_unw_plv_df, "/Users/jacktarricone/ch1_jemez_data/feb12-26_no_snow_unw_plv_df.csv")
 
 # plot unw data vs longitude (this should be vs cell in reality need to update)
 
