@@ -39,24 +39,6 @@ values(unw_raw)[(unw_raw)==0]<-NA
 unw_raw
 plot(unw_raw, add = TRUE)
 
-# create ncol rast
-cols <-rev(seq(1,4713,1)) # ncols vector
-cols_mat <-matrix(cols, nrow=7795, ncol=length(cols), byrow=TRUE) # make matrix, byrow TRUE
-cols_rast <-rast(cols_mat)
-crs(cols_rast) <-crs(unw_raw)
-ext(cols_rast) <-ext(unw_raw)
-plot(cols_rast)
-#writeRaster(cols_rast, "ncol.tif")
-
-# create nrow rast
-rows <-rev(seq(1,7795,1)) # nrows vector
-rows_mat <-matrix(rows, nrow=length(rows), ncol=4713, byrow=FALSE) # make matrix, by row FALSE
-rows_rast <-rast(rows_mat)
-crs(rows_rast) <-crs(unw_raw)
-ext(rows_rast) <-ext(unw_raw)
-plot(rows_rast)
-#writeRaster(rows_rast, "nrow.tif")
-
 
 #########################################
 ## resample and crop to one size ########
@@ -64,13 +46,41 @@ plot(rows_rast)
 
 # resample look vector to unwrapped phase
 plv_resamp <-resample(plv_km, unw_raw, method = "bilinear")
-plv_resamp
 ext(plv_resamp) <-ext(unw_raw) # set extent as same as unw
 plv_resamp
 
 # test plot
 plot(plv_km)
 plot(unw_raw, add = TRUE)
+
+######
+# create rast of approx distance in range for plotting
+# while this works bc it's almost north south, this method is needed for
+# rasters that are other orientations 
+
+# convert number rows to distance in range direciton
+range_distance <- global(fun = max, na.rm = T, plv_km) - global(fun = min, na.rm = T, plv_km)
+range_distance <-range_distance[1,1] # create int
+range_distance
+
+# calc pixel size in meters
+appx_km_per_pixel <-range_distance/ncols
+appx_km_per_pixel
+
+# create vector of range distance starting at 0
+range_vector <-rev(seq(0,range_distance,appx_km_per_pixel))
+range_vector_km <-range_vector[-c(4174)] # delete one extra row
+
+# create matrix that is same size as all other rasters
+range_mat <-matrix(range_vector_km, nrow=7795, 
+                   ncol=length(range_vector_km), byrow=TRUE) # make matrix, byrow TRUE
+
+# and transform to raster
+range_rast <-rast(range_mat)
+crs(range_rast) <-crs(unw_raw)
+ext(range_rast) <-ext(unw_raw)
+plot(range_rast)
+range_rast
 
 #### crop down to largest size possible with all overlapping pixels
 # create new rast, set non NA values to 0 for unw
@@ -80,8 +90,6 @@ plot(unw_non_na)
 
 # same thing for plv
 plv_resamp_non_na <-plv_resamp
-#values(plv_resamp_non_na)[!is.na(plv_resamp_non_na[])] = 1
-plot(plv_resamp_non_na)
 
 # crop plv with unw, this leaves only the cells that exist in both data sets for plotting
 #plv_crop1 <-terra::mask(plv_resamp_non_na, unw_non_na, maskvalues=NA)
@@ -93,6 +101,7 @@ plot(plv_resamp)
 plot(unw_raw, add = TRUE)
 plot(plv_unw_mask, add = TRUE)
 
+# check data, good
 unw_raw
 plv_unw_mask
 
@@ -118,18 +127,17 @@ snow_mask_raw <-rast("landsat_fsca_2-18.tif")
 plot(snow_mask_raw)
 
 # clip edges off no snow mask to make it same size as plv and unw
-snow_mask <-mask(snow_mask_raw, unw_masked, maskvalue = NA)
+snow_mask <-mask(snow_mask_raw, unw_raw, maskvalue = NA)
 plot(snow_mask)
-
 
 #### snow unw and plv
 
 # snow unw
-snow_unw <-mask(unw_masked, snow_mask, maskvalue = NA)
+snow_unw <-mask(unw_raw, snow_mask, maskvalue = NA)
 plot(snow_unw)
 
 # snow plv
-snow_plv <-mask(plv_resamp, snow_mask, maskvalue = NA)
+snow_plv <-mask(plv_resamp, snow_unw, maskvalue = NA)
 plot(snow_plv)
 
 
@@ -147,9 +155,16 @@ colnames(plv_df)[4] <- "plv_km"
 head(plv_df)
 hist(plv_df$plv_km, breaks = 100) #quick hist to check
 
+# range distance
+range_df <-as.data.frame(range_rast, xy=TRUE, cells=TRUE, na.rm=TRUE)
+colnames(range_df)[4] <- "range_distance_km"
+head(range_df)
+hist(range_df$range_distance_km, breaks = 100) #quick hist to check
+
 #bind last column on for future plot
-snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km)
+snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km, range_df$range_distance_km)
 colnames(snow_unw_plv_df)[5] <- "plv_km"
+colnames(snow_unw_plv_df)[6] <- "range_distance_km"
 head(snow_unw_plv_df)
 
 # save the data frame for making more plots in the future
@@ -163,7 +178,7 @@ p9 <-ggplot(snow_unw_plv_df, aes(x, unwrapped_phase)) +
   geom_hex(bins = 25) +
   scale_fill_gradient(low = "white", high = "firebrick") +
   #stat_smooth_func2(geom="text",method="lm",hjust=0,parse=TRUE) +
-  #geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE) +
   #geom_abline(slope = coef(lm_fit)[[2]], intercept = coef(lm_fit)[[1]], size = 1)+
   #scale_y_continuous(breaks = seq(-5,6,2))+
   labs(title = "Jemez Snow Pixels Unwrapped Phase 2/12-2/26",
@@ -185,42 +200,42 @@ print(p9)
 
 ################################ no snow
 # make no snow mask
-no_snow_mask <-snow_mask
-no_snow_mask[is.na(no_snow_mask)] <- -99
-no_snow_mask[no_snow_mask > 0] <-NA
-plot(no_snow_mask)
+# no_snow_mask <-snow_mask
+# no_snow_mask[is.na(no_snow_mask)] <- -99
+# no_snow_mask[no_snow_mask > 0] <-NA
+# plot(no_snow_mask)
 
 #### no snow mask
 
 #### no snow mask
 
-# no snow unw
-no_snow_unw <-mask(unw_masked, no_snow_mask, maskvalue = NA)
-plot(no_snow_unw)
-
-# no snow plv
-no_snow_plv_v1 <-mask(plv_resamp, no_snow_mask, maskvalue = NA)
-plot(no_snow_plv_v1)
-no_snow_plv <-mask(no_snow_plv_v1, cor, NA)
-plot(no_snow_plv)
-
-### convert no snow plv and unw rasters to dataframes, rename data columns
-# unw
-unw_df <-as.data.frame(snow_unw, xy=TRUE, cells=TRUE, na.rm=TRUE)
-colnames(unw_df)[4] <- "unwrapped_phase"
-head(unw_df)
-hist(unw_df$unwrapped_phase, breaks = 100) #quick hist to check
-
-#plv
-plv_df <-as.data.frame(snow_plv, xy=TRUE, cells=TRUE, na.rm=TRUE)
-colnames(plv_df)[4] <- "plv_km"
-head(plv_df)
-hist(plv_df$plv_km, breaks = 100) #quick hist to check
-
-#bind last column on for future plot
-snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km)
-colnames(no_snow_unw_plv_df)[5] <- "plv_km"
-head(no_snow_unw_plv_df)
+# # no snow unw
+# no_snow_unw <-mask(unw_masked, no_snow_mask, maskvalue = NA)
+# plot(no_snow_unw)
+# 
+# # no snow plv
+# no_snow_plv_v1 <-mask(plv_resamp, no_snow_mask, maskvalue = NA)
+# plot(no_snow_plv_v1)
+# no_snow_plv <-mask(no_snow_plv_v1, cor, NA)
+# plot(no_snow_plv)
+# 
+# ### convert no snow plv and unw rasters to dataframes, rename data columns
+# # unw
+# unw_df <-as.data.frame(snow_unw, xy=TRUE, cells=TRUE, na.rm=TRUE)
+# colnames(unw_df)[4] <- "unwrapped_phase"
+# head(unw_df)
+# hist(unw_df$unwrapped_phase, breaks = 100) #quick hist to check
+# 
+# #plv
+# plv_df <-as.data.frame(snow_plv, xy=TRUE, cells=TRUE, na.rm=TRUE)
+# colnames(plv_df)[4] <- "plv_km"
+# head(plv_df)
+# hist(plv_df$plv_km, breaks = 100) #quick hist to check
+# 
+# #bind last column on for future plot
+# snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km)
+# colnames(no_snow_unw_plv_df)[5] <- "plv_km"
+# head(no_snow_unw_plv_df)
 
 # save the data frame for making more plots in the future
 #fwrite(no_snow_unw_plv_df, "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_unw_plv_df.csv")
