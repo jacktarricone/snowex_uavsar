@@ -107,6 +107,7 @@ plot(plv_unw_mask, add = TRUE)
 unw_raw
 plv_unw_mask
 
+
 # mask both unw and plv with the mask
 # unw_masked <-terra::mask(unw_raw, plv_unw_mask, maskvalues=NA)
 # plot(unw_masked)
@@ -139,7 +140,7 @@ snow_unw <-mask(unw_raw, snow_mask, maskvalue = NA)
 plot(snow_unw)
 
 # snow plv
-snow_plv <-mask(plv_resamp, snow_unw, maskvalue = NA)
+snow_plv <-mask(plv_unw_mask, snow_unw, maskvalue = NA)
 plot(snow_plv)
 
 
@@ -326,7 +327,7 @@ p9 <-ggplot(plotting_df, aes(plv_km, unwrapped_phase)) +
 
 print(p9)
 
-setwd("/Users/jacktarricone/ch1_jemez_data/")
+setwd("/Users/jacktarricone/ch1_jemez_data/plots/")
 # ggsave(p9,
           # file = "feb12-26_nosnow_vs_plv_no_title.png",
           # width = 5, 
@@ -336,13 +337,25 @@ setwd("/Users/jacktarricone/ch1_jemez_data/")
 
 ### correct unw data using path length and the linear estimation we generated
 
-path_length_correction <-function(unw, plv){return((unw - ((plv * coef(lm_fit)[[2]]) + coef(lm_fit)[[1]])))}
-unw_corrected <-path_length_correction(unw_masked, plv_masked)
+path_length_correction <-function(unw, plv){
+   atm_corrected <-unw - ((plv * coef(lm_fit)[[2]]) + coef(lm_fit)[[1]])
+   return(atm_corrected)
+}
+
+# save original
+unw_corrected <-path_length_correction(unw_raw, plv_unw_mask)
 plot(unw_corrected)
+writeRaster(unw_corrected, "unw_corrected_feb12-26.tif")
 
-writeRaster(unw_corrected, "unw_corrected_feb12-19.tif")
+# snow mask
+snow_unw_corrected <-mask(unw_corrected, snow_mask)
+plot(snow_unw_corrected)
+writeRaster(snow_unw_corrected, "snow_unw_corrected_feb12-26.tif")
 
+
+###################
 # test plot with corrected data
+###################
 
 unw_corrected_df <-as.data.frame(unw_corrected, xy=TRUE, cells=TRUE, na.rm=TRUE)
 colnames(unw_corrected_df)[4] <- "unwrapped_phase"
@@ -367,7 +380,7 @@ print(p13)
 
 
 ggsave(p13,
-       file = "jemez_phase_corrected.png",
+       file = "jemez_phase_corrected_12-26.png",
        width = 6, 
        height = 4,
        dpi = 400)
