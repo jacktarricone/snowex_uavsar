@@ -1,10 +1,9 @@
-# SWE inversion for 2/19-2/26
+# SWE inversion for 2/12-2/26
 # jack tarricone
 
-# using radians
+# using radians!!!
 
-# update march 7th using pit location!
-# systematically extract values from 8 points around cell pit
+# using isce processed 12-26 raster
 
 library(terra)
 library(ggplot2)
@@ -13,8 +12,8 @@ library(ggplot2)
 setwd("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/")
 list.files() #pwd
 
-# import corrected unwrapped phase data
-unw_raw <-rast("unw_feb19-feb26.tif")
+# import corrected unwrapped phase data 
+unw_raw <-rast("unw_corrected_feb12-26.tif")
 plot(unw_raw)
 
 # import i_angle raster and resample to unw grid bc of slight extent difference
@@ -67,23 +66,24 @@ plot(unw_snow_mask)
 ########################################################################
 
 # table ryan sent over
+### use NSIDC data
 pit_info <-read.csv("/Users/jacktarricone/ch1_jemez_data/pit_data/perm_pits.csv")
 head(pit_info)
 
 # ## define static information from pits
 # # calculate density
-# mean_density_feb12 <- pit_info$mean_density[1]
-# mean_density_feb20 <- pit_info$mean_density[2]
+mean_density_feb12 <- pit_info$mean_density[1]
+mean_density_feb26 <- pit_info$mean_density[3]
 # 
 # # mean density between two flights
-# mean_density_feb12_20 <-(mean_density_feb12 + mean_density_feb20)/2
+mean_density_feb12_26 <-(mean_density_feb12 + mean_density_feb26)/2
 
 # dielctric constant k
-k_feb20 <- pit_info$mean_k[2]
+k_feb12 <- pit_info$mean_k[1]
 k_feb26 <- pit_info$mean_k[3]
 
 # mean k between two flights
-mean_k_feb20_26 <-(k_feb20+k_feb26)/2
+mean_k_feb12_26 <-(k_feb12+k_feb26)/2
 
 #######################
 #### swe inversion ####
@@ -101,6 +101,27 @@ uavsar_wL <- 23.8403545
 insar_constant <-function(inc, wL, k){
   (-(4*pi)/wL)*(cos(inc) - sqrt(k - sin((inc)^2)))
 }
+
+# from translated from uavsar_pytools function
+depth_from_phase <-function(delta_phase, inc_angle, perm, wavelength = 0.238403545){
+  
+  delta_z = (-delta_phase * wavelength) / (4 * pi * (cos(inc_angle) - sqrt(perm - sin(inc_angle)^2)))
+  
+}
+
+# testing
+depth_change <-depth_from_phase(delta_phase = unw_snow_mask,
+                                inc_angle = lidar_inc,
+                                perm = mean_k_feb12_26,
+                                wavelength = uavsar_wL)
+
+plot(depth_change)
+hist(depth_change, breaks = 100)
+
+# convert to SWE change
+swe_change <-depth_change*(mean_density_feb12_26/1000)
+plot(swe_change)
+hist(swe_change, breaks = 100)
 
 # create the insar constant raster
 # because of the variation of .inc angle, this value you will change on pixelwise basis
