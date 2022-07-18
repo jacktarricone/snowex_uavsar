@@ -59,6 +59,8 @@ plot(unw_raw, add = TRUE)
 # rasters that are other orientations 
 
 # convert number rows to distance in range direciton
+ncols <-ncol(unw_raw) 
+nrows <-nrow(unw_raw)
 range_distance <- global(fun = max, na.rm = T, plv_km) - global(fun = min, na.rm = T, plv_km)
 range_distance <-range_distance[1,1] # create int
 range_distance
@@ -156,142 +158,23 @@ head(plv_df)
 hist(plv_df$plv_km, breaks = 100) #quick hist to check
 
 # range distance
+####### not actually using this
 range_df <-as.data.frame(range_rast, xy=TRUE, cells=TRUE, na.rm=TRUE)
 colnames(range_df)[4] <- "range_distance_km"
 head(range_df)
 hist(range_df$range_distance_km, breaks = 100) #quick hist to check
 
 #bind last column on for future plot
-snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km, range_df$range_distance_km)
-colnames(snow_unw_plv_df)[5] <- "plv_km"
-colnames(snow_unw_plv_df)[6] <- "range_distance_km"
-head(snow_unw_plv_df)
+plotting_df<-cbind(unw_df, plv_df$plv_km)
+head(plotting_df)
+colnames(plotting_df)[5] <- "plv_km"
+#colnames(snow_unw_plv_df)[6] <- "range_distance_km"
+head(plotting_df)
 
 # save the data frame for making more plots in the future
-data.table::fwrite(snow_unw_plv_df, "/Users/jacktarricone/ch1_jemez_data/feb12-26_no_snow_unw_plv_df.csv")
+#data.table::fwrite(snow_unw_plv_df, "/Users/jacktarricone/ch1_jemez_data/feb12-26_no_snow_unw_plv_df.csv")
 
-# plot unw data vs longitude (this should be vs cell in reality need to update)
-
-theme_set(theme_light(base_size =12))
-
-p9 <-ggplot(snow_unw_plv_df, aes(x, unwrapped_phase)) +
-  geom_hex(bins = 25) +
-  scale_fill_gradient(low = "white", high = "firebrick") +
-  #stat_smooth_func2(geom="text",method="lm",hjust=0,parse=TRUE) +
-  geom_smooth(method = "lm", se = FALSE) +
-  #geom_abline(slope = coef(lm_fit)[[2]], intercept = coef(lm_fit)[[1]], size = 1)+
-  #scale_y_continuous(breaks = seq(-5,6,2))+
-  labs(title = "Jemez Snow Pixels Unwrapped Phase 2/12-2/26",
-       x = "Longitude Change (deg)",
-       y = "Unwrapped Phase (radians)")+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank())
-
-print(p9)
-
-# save
-# ggsave(p9,
-# file = "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_unw_vs_lon.png",
-# width = 6, 
-# height = 4,
-# dpi = 400)
-
-################################ no snow
-# make no snow mask
-# no_snow_mask <-snow_mask
-# no_snow_mask[is.na(no_snow_mask)] <- -99
-# no_snow_mask[no_snow_mask > 0] <-NA
-# plot(no_snow_mask)
-
-#### no snow mask
-
-#### no snow mask
-
-# # no snow unw
-# no_snow_unw <-mask(unw_masked, no_snow_mask, maskvalue = NA)
-# plot(no_snow_unw)
-# 
-# # no snow plv
-# no_snow_plv_v1 <-mask(plv_resamp, no_snow_mask, maskvalue = NA)
-# plot(no_snow_plv_v1)
-# no_snow_plv <-mask(no_snow_plv_v1, cor, NA)
-# plot(no_snow_plv)
-# 
-# ### convert no snow plv and unw rasters to dataframes, rename data columns
-# # unw
-# unw_df <-as.data.frame(snow_unw, xy=TRUE, cells=TRUE, na.rm=TRUE)
-# colnames(unw_df)[4] <- "unwrapped_phase"
-# head(unw_df)
-# hist(unw_df$unwrapped_phase, breaks = 100) #quick hist to check
-# 
-# #plv
-# plv_df <-as.data.frame(snow_plv, xy=TRUE, cells=TRUE, na.rm=TRUE)
-# colnames(plv_df)[4] <- "plv_km"
-# head(plv_df)
-# hist(plv_df$plv_km, breaks = 100) #quick hist to check
-# 
-# #bind last column on for future plot
-# snow_unw_plv_df<-cbind(unw_df, plv_df$plv_km)
-# colnames(no_snow_unw_plv_df)[5] <- "plv_km"
-# head(no_snow_unw_plv_df)
-
-# save the data frame for making more plots in the future
-#fwrite(no_snow_unw_plv_df, "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_unw_plv_df.csv")
-
-# plot unw data vs longitude (this should be vs cell in reality need to update)
-
-theme_set(theme_light(base_size =12))
-
-p9 <-ggplot(snow_unw_plv_df, aes(x, unwrapped_phase)) +
-  geom_hex(bins = 25) +
-  scale_fill_gradient(low = "white", high = "firebrick") +
-  #stat_smooth_func2(geom="text",method="lm",hjust=0,parse=TRUE) +
-  #geom_smooth(method = "lm", se = FALSE) +
-  #geom_abline(slope = coef(lm_fit)[[2]], intercept = coef(lm_fit)[[1]], size = 1)+
-  #scale_y_continuous(breaks = seq(-5,6,2))+
-  labs(title = "Jemez River No Snow Unwrapped Phase 2/12-2/26",
-       x = "Longitude Change (deg)",
-       y = "Unwrapped Phase (radians)")+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank())
-
-print(p9)
-
-
-
-########################3 plot path length vs longitude
-
-p10 <-ggplot(no_snow_unw_plv_df, aes(x, plv_km)) +
-  geom_hex(bins = 25) +
-  scale_fill_gradient(low = "grey98", high = "midnightblue") +
-  #stat_smooth_func2(geom="text",method="lm",hjust=0,parse=TRUE) +
-  #geom_smooth(method = "lm", se = FALSE) +
-  #geom_abline(slope = coef(lm_fit)[[2]], intercept = coef(lm_fit)[[1]], size = 1)+
-  #scale_y_continuous(breaks = seq(-5,6,2))+
-  labs(title = "Jemez River Radar Path Length 2/12-2/19",
-       x = "Longitude Change (deg)",
-       y = "Path Length to Sensor (km)")+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank())
-print(p10)
-
-##### unwrapped phase vs longitude
-
-# save
-# ggsave(p10,
-# file = "/Volumes/JT/projects/uavsar/jemez/look_vector/no_snow_plv_vs_lon.png",
-# width = 6, 
-# height = 4,
-# dpi = 400)
-
-
-# plot unw vs plk
+# plot unw vs plv
 # call stat smooth function for trend line
 stat_smooth_func2 <- function(mapping = NULL, data = NULL,
                               geom = "smooth", position = "identity",
@@ -412,9 +295,10 @@ StatSmoothFunc <- ggproto("StatSmooth", Stat,
 )
 
 
-
-# run linear model to plot trend line
-lm_fit <-lm(no_snow_unw_plv_df$unwrapped_phase ~ no_snow_unw_plv_df$plv_km)
+#######################################
+# run linear model to plot trend line #
+#######################################
+lm_fit <-lm(plotting_df$unwrapped_phase ~ plotting_df$plv_km)
 summary(lm_fit)
 
 
@@ -422,29 +306,32 @@ summary(lm_fit)
 ########### unw vs plv #################
 ########################################
 
+theme_set(theme_light(base_size =12))
 
-p12 <-ggplot(no_snow_unw_plv_df, aes(plv_km, unwrapped_phase)) +
+p9 <-ggplot(plotting_df, aes(plv_km, unwrapped_phase)) +
   geom_hex(bins = 25) +
-  scale_fill_gradient(low = "white", high = "seagreen") +
+  scale_fill_gradient(low = "white", high = "firebrick") +
   stat_smooth_func2(geom="text",method="lm",hjust=0,parse=TRUE) +
-  #geom_smooth(method = "lm", se = FALSE) +
-  geom_abline(slope = coef(lm_fit)[[2]], intercept = coef(lm_fit)[[1]], size = 1)+
-  scale_y_continuous(breaks = seq(-5,15,5))+
-  scale_x_continuous(breaks = seq(10,30,5))+
-  labs(title = "Jemez Radar Path Length vs. Unwrapped Phase 2/12-2/19",
-       x = "Look Vector Length (km)",
+  geom_smooth(method = "lm", se = FALSE) +
+  #geom_abline(slope = coef(lm_fit)[[2]], intercept = coef(lm_fit)[[1]], size = 1)+
+  #scale_y_continuous(breaks = seq(-5,6,2))+
+  labs(#title = "Unwrapped Phase vs. Radar Look Vector Length 2/12-2/26 Pair",
+       x = "Radar Look Vector Length (km)",
        y = "Unwrapped Phase (radians)")+
+  scale_x_reverse()+
   theme(axis.line = element_line(colour = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank())
-print(p12)
 
-# ggsave(p12,
-#         file = "no_snow_plv_vs_unw.png",
-#         width = 6, 
-#         height = 4,
-#         dpi = 400)
+print(p9)
+
+setwd("/Users/jacktarricone/ch1_jemez_data/")
+# ggsave(p9,
+          # file = "feb12-26_nosnow_vs_plv_no_title.png",
+          # width = 5, 
+          # height = 5,
+          # dpi = 400)
 
 
 ### correct unw data using path length and the linear estimation we generated
