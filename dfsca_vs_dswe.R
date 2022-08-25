@@ -38,20 +38,20 @@ dfsca <- project(dfsca, "EPSG:4326")
 plot(dfsca)
 
 #bring in DEM
-dswe_cum <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/delta_swe_cum.tif")
-dswe_cum
-plot(dswe_cum)
+dswe_cm <-rast("/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/new_swe_change/dswe_feb12-26_sp.tif")
+dswe_cm
+plot(dswe_cm)
 
 # crop to extent of SWE data
-dfsca_crop <-crop(dfsca, ext(dswe_cum))
+dfsca_crop <-crop(dfsca, ext(dswe_cm))
 plot(dfsca_crop)
 # writeRaster(dfsca_crop, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/dfsca_30m.tif")
 
 # resample SWE data up to 30m landsat
-dswe_cum30m <-resample(dswe_cum, dfsca_crop, method = "bilinear")
+dswe_cum30m <-resample(dswe_cm, dfsca_crop, method = "bilinear")
 dswe_cum30m
 plot(dswe_cum30m)
-# writeRaster(dswe_cum30m, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/dswe_cum30m.tif")
+#writeRaster(dswe_cum30m, "/Users/jacktarricone/ch1_jemez_data/gpr_rasters_ryan/dswe_cm_30m.tif")
 
 
 # mask for missing pixels in SWE data

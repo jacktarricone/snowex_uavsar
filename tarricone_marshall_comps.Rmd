@@ -1,0 +1,166 @@
+---
+title: "Dr. Hans-Peter Marshall Comprehensive Exam"
+author: "Jack Tarricone"
+date: "2022-08-08"
+bibliography: ch2_jemez.bib
+link-citations: true
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1.0 SWE change approach with L-band InSAR
+
+##### 1.1 Explain your approach for estimating SWE changes from InSAR. You don't need to explain the InSAR processing, but describe the corrections needed, and the inputs required, to estimate SWE change. \
+\
+@guneriussenInSAREstimationChanges2000 theorized a relationship between InSAR phase change and variation in dry snow depth or snow water equivalent (SWE) between acquisitions. Dry snow has a low attenuation rate of the radar signal, and the majority of the backscatter comes from the snow ground interface. Snow and the atmosphere have different dielectric properties, causing a slight refraction and phase delay and when the radar signal propagates through the snow layer (Figure 1). This refraction is related to the snow depth ($d_s$) and the snow density ($\rho_s$). The theory leverages the fact that a radar wave propagates slightly slower through dry snow than it does the atmosphere. The equation can be defined as:
+
+```{=tex}
+\begin{equation}
+\Delta d_s = - \frac{\Delta \phi \lambda}{4 \pi} \frac{1}{\cos^{ } \theta- \sqrt{\epsilon'_{s} - \sin^{2} \theta}}
+\end{equation}
+```
+Where $\Delta d_s$ is snow depth, $\lambda$ is the radar wavelength (23.84 cm), $\theta$ is the radar incidence angle, and $\epsilon'_s$ the real part of dielectric permittivity.
+
+```{r}
+# define swe change function in r
+
+depth_from_phase <-function(delta_phase, inc_angle, perm, wavelength){
+  
+  delta_z = (-delta_phase * wavelength) / 
+    (4 * pi * (cos(inc_angle) - sqrt(perm - sin(inc_angle)^2)))
+  
+}
+```
+
+##### 1.2 What assumptions do you make when taking this approach?
+
+The main assumption made when using this approach
+
+##### 1.3 Assume the density is 250 kg/m$^3$. What permittivity does this imply?
+
+Using the equation that relates density and permittivy outlined in @guneriussenInSAREstimationChanges2000:
+
+```{r}
+# create function
+guneriussen_perm <-function(density){
+  perm <- 1 + 1.6 * (density/1000) + 1.8 * (density/1000)^3
+  return(perm)
+}
+
+# calculate
+snow_density <- 250
+perm_250 <-guneriussen_perm(density = snow_density)
+print(perm_250)
+```
+
+##### 1.4 You are lucky enough to have a high-resolution snow-free DEM. Your accurate incidence angle from this 1m DEM is 42.3 degrees. Assuming a ground surface azimuth pointed at the radar, a slope of 20 degrees, and a slope-parallel snow surface that has a uniform vertical snow depth of 20cm, calculate the incidence angle at the snow-ground interface. \
+\
+@leinssSnowWaterEquivalent2015 defines the equation to calculate difference in optical path length as:
+
+```{=tex}
+\begin{equation}
+\Delta R = - \Delta d_s ( \cos \theta- \sqrt{\epsilon - \sin^{2} \theta})
+\end{equation}
+```
+
+Where $\Delta R$ is change in radar path length from the refraction of the snowpack, due to both it's depth and density. 
+
+```{r}
+# define variables
+snow_depth <- 20 # cm
+inc_deg <- 42.3 # degrees
+slope_deg <- 20 # degrees
+uavsar_wl <- 23.8403545 #  cm
+
+# convert from degrees to radians
+deg2rad <-function(deg){(deg * pi) / (180)}
+rad2deg <-function(rad){(rad * 180) / (pi)}
+
+inc_rad <-deg2rad(inc_deg) # not making this mistake again....!
+
+# define optical path length difference function
+delta_r_calc <-function(delta_sd, perm, inc_angle){
+  delta_r <- - delta_sd * (cos(inc_angle) - sqrt(perm - sin(inc_angle)^2))
+  return(delta_r)
+}
+
+# calculate
+delta_r <-delta_r_calc(delta_sd = snow_depth,
+                       perm = perm_250,
+                       inc_angle = inc_rad)
+print(paste0("change in path length [cm]: ", delta_r))
+```
+
+We can then use this length to calculate the incidence angle shift, and therefore the snow-ground inc. angle.
+
+```{r}
+# total path length adding depth with path length increase
+snow_path_length <- snow_depth + delta_r
+
+# calculate angle shifted from new path length
+shift_angle_rad <-acos(snow_depth/snow_path_length)
+
+# convert back to degrees
+shift_angle_deg <-rad2deg(shift_angle_rad)
+
+# add the shift to the incidence angle before
+snow_ground_inc_angle <-inc_deg + shift_angle_deg
+print(paste0("snow ground inc. angle in degrees: ", snow_ground_inc_angle))
+```
+
+```{r}
+
+# define phase change function
+phase_from_depth <-function(delta_sd, inc_angle, perm, wavelength){
+  
+  delta_phase <- - delta_sd * (4 * pi * (cos(inc_angle) - 
+                                            sqrt(perm - sin(inc_angle)^2))) / wavelength
+  return(delta_phase)
+}
+
+phase_shift_rad <-phase_from_depth(delta_sd = snow_depth, 
+                               inc_angle = inc_rad, 
+                               perm = perm_250, 
+                               wavelength = uavsar_wl)
+
+
+phase_shift_deg <-rad2deg(phase_shift_rad)
+print(phase_shift_deg)
+
+
+snow_ground_inc_angle <-inc_deg - phase_shift_deg
+print(paste0("inc. angle at snow ground interface in degrees: ", snow_ground_inc_angle))
+```
+
+##### 1.5 Calculate the path length through the snowpack.
+
+##### 1.6 Calculate the travel-time through the snowpack.
+
+##### 1.7 Compare this to the path length with no snow, and estimate the change in travel-time, and resulting phase change.
+
+##### 1.8 Plug this phase change, incidence angle, and permittivity into the SWE change inversion equation you have been using (Guneriussen and others, 2001; Deeb and others, 2011) and compare to the simulated SWE.
+
+##### 1.9 Now assume the snow is drifted in this location and the snow surface is perfectly horizontal, while the ground slope below is still 20 deg, oriented towards the radar. At this location the vertical snow depth is still 20cm, but the snow surface has a 0 degree slope. Assuming you know this snow surface accurately, calculate the travel time change and resulting phase change between this condition and the snow-free condition.
+
+## 2.0 Sensitivity of inversion
+
+##### 2.1 For the situation above, vary the snow density by ± 20%, apply the SWE change inversion (Guneriussen and others, 2001; Deeb and others, 2011) and show the sensitivity to the density estimate.
+
+```{r}
+# calculate +/- 20% of density
+density_lower_bound <-snow_density - (snow_density/100)*20
+print(density_lower_bound)
+
+density_upper_bound <-snow_density + (snow_density/100)*20
+print(density_upper_bound)
+
+```
+
+##### 2.2 Repeat for a change in incidence angle of ± 5 degrees.
+
+##### 2.3 Repeat for an uncertainty in phase change of ± 5 degrees.
+
+##### 2.4 Discuss the role of liquid water (Bonnell and others, 2021) on the observed phase change, and describe how it could affect your SWE change estimates.
