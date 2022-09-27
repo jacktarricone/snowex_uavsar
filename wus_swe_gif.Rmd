@@ -1,0 +1,156 @@
+---
+title: "WUS SWE Reanalysis Visualization"
+author: "Jack Tarricone"
+date: "2022-09-26"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+## Visualizing snow accumulation and ablation
+
+-Creating annual snow accumulation and ablation gif -Western United
+States UCLA Daily Snow Reanalysis, Version 1 (WUS_UCLA_SR) -URL:
+<https://nsidc.org/data/wus_ucla_sr/versions/1#anchor-1> -Data
+Contributor(s): Fang, Y., Y. Liu, and S. A. Margulis., UCLA -By: Jack
+Tarricone
+
+### Load packages
+
+```{r, load-packages, message = FALSE}
+library(terra) # foundational package for raster and vector spatial data analysis
+library(lubridate) # manipulating/formatting dates
+library(ncdf4) # working with netcdf data
+library(ggmap) # making maps
+library(gganimate) # gif making
+library(ggplot2);theme_set(theme_minimal(12)) # plotting
+library(RColorBrewer) # color scales
+```
+
+### Data download
+
+-programmatically downloading data from NSIDC using wget -for
+reproducibility i'm showing this in R, but i would normally do it in the
+terminal -you also but downloaded manually here:
+-<https://nsidc.org/data/wus_ucla_sr/versions/1#anchor-1>
+
+```{r}
+# grab the wy2018 tile link from nsidc
+download_link <-"https://n5eil01u.ecs.nsidc.org/SNOWEX/WUS_UCLA_SR.001/2018.10.01/WUS_UCLA_SR_v01_N39_0W121_0_agg_16_WY2018_19_SWE_SCA_POST.nc"
+
+# make string for wget download
+wget_code <-paste0("wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies --no-check-certificate --auth-no-challenge=on -r --reject 'index.html*' -np -e robots=off ", download_link)
+print(wget_code)
+
+# download using wget to same folder as markdown script
+# system(wget_code)
+```
+
+```{r}
+# netcdf file path
+wy2018 <-list.files(pattern = "SWE_SCA_POST.nc$", full.names = TRUE)
+wy2018 # check
+```
+
+```{r}
+# read in netcdf
+ncin <- nc_open(wy2018) # open tahoe tile
+ncin # inspect
+
+# convert the SWE variable to an array
+swe_array <- ncvar_get(ncin,"SWE_Post") # read in
+
+# pull out med SWE from third layer
+med_swe_array <-swe_array[,,3,] 
+```
+
+```{r}
+# convert to raster stack and project
+stack <-rast(med_swe_array)
+ext(stack)<- ext(-121,-120,39,40)
+crs(stack) <-"epsg:4326"
+stack # inspect
+plot(stack[[200]])
+```
+
+### Preparing data for plotting
+
+While `terra::plot` is suitable for quick visualizations, it doesn't
+have functionality to make publication quality figures. For this,
+`ggplot` and `geom_raster` are much better suited. To use `geom_raster`,
+`SpatRaster` data needs to be converted into a data frame using the
+`as.data.frame` function.
+
+```{r}
+# convert to df for ggplot
+swe_df <-as.data.frame(stack, xy = TRUE) # xy = TRUE creates lat and lon columns
+dim(swe_df) # 50655 rows, by 367 columns (1 lat, 1 lon, 365 days)
+
+## rename columns to dates for plotting
+# create dates sequence
+dates_seq <-seq(ymd(origin = "2017-10-01"), ymd("2018-09-30"),1)
+colnames(swe_df)[3:367] <-as.character(dates_seq) # rename cols to date, leave at  character string
+swe_df[swe_df == 0] <-NA # convert 0 to NA for plotting
+```
+
+### Using `ggmap` to import a basemap
+
+```{r, message = FALSE}
+# set map bounding box
+loc <-c(-121,39,-120,40)
+
+# download google sat
+my_map <- get_map(location = loc,
+                 source = "google", 
+                 maptype = "satellite", 
+                 crop = TRUE)
+
+# see map, looks good
+ggmap(my_map)
+```
+
+### Plot using `geom_raster`
+
+```{r}
+# define color scale
+blues_scale <-brewer.pal(9, 'Blues')
+
+# plot april 1st, 2018
+ggmap(my_map) +
+  geom_raster(swe_df, # first 
+              mapping = aes(x,y, fill = `2018-04-01`)) +
+  coord_equal()+
+  scale_fill_gradientn(colours = blues_scale, 
+                       limits = c(0,2.5), # set color scale bounds
+                       na.value="transparent") + # makes no snow values transparent
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1)) + # black border
+  labs(title = "North Lake Tahoe SWE: 2018-04-01", 
+       fill = "SWE (m)", # legend title
+       x="Lon (deg)", y="Lat (deg)")
+```
+
+### Make a gif using ```gganimate```
+```{r}
+# pivot for making gif
+swe_df_gif <-tidyr::pivot_longer(swe_df,3:367) # pivot
+colnames(swe_df_gif)[3:4] <-c("date","swe") # rename
+swe_df_gif$date <-ymd(swe_df_gif$date) # convert to date from character
+
+# plot for animation
+plot <-ggmap(my_map) +
+  geom_raster(swe_df_gif, 
+              mapping = aes(x,y, 
+                            group = date, # for the gif
+                            fill = swe)) + # what data is being displayed
+  coord_equal() + # set aspect ratio
+  scale_fill_gradientn(colours = blues_scale, 
+                       limits = c(0,2.5), 
+                       na.value="transparent") +
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  labs(title = "Northern Sierra SWE: {frame_time}", # {frame_time} will be date values
+       fill = "SWE (m)",
+       x="Lon (deg)", y="Lat (deg)")+
+  transition_time(date) + # format gif by date
+  ease_aes("linear") # how transitions happen
+```
